@@ -178,5 +178,20 @@ class RepositoryBrowseAction extends DefaultBrowseAction
     {
       $this->view = sfConfig::get('app_default_repository_browse_view', 'card');
     }
+
+    $this->getAdvancedFilterTerms();
+  }
+
+  private function getAdvancedFilterTerms()
+  {
+    $limit = 500;
+
+    $this->thematicAreas = QubitTerm::getTermsByTaxonomyId(QubitTaxonomy::THEMATIC_AREA_ID, $limit);
+    $this->repositoryTypes = QubitTerm::getTermsByTaxonomyId(QubitTaxonomy::REPOSITORY_TYPE_ID, $limit);
+
+    $query = new \Elastica\Query(new \Elastica\Query\MatchAll);
+    $query->setLimit($limit);
+
+    $this->repositories = QubitSearch::getInstance()->index->getType('QubitRepository')->search($query);
   }
 }
