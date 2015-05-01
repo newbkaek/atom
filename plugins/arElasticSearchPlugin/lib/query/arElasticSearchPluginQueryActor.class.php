@@ -17,10 +17,19 @@
  * along with Access to Memory (AtoM).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-class TermBrowseTermAction extends sfAction
+class arElasticSearchPluginQueryActor extends arElasticSearchPluginQuery
 {
-  public function execute($request)
-  {
-    $this->forward('term','index');
-  }
+  const INDEX_TYPE = 'QubitActor';
+
+  // Arrays not allowed in class constants
+  public static
+    $FACETS = array(
+      'languages' =>
+        array('type' => 'term',
+              'field' => 'i18n.languages',
+              'size' => 10),
+      'types' =>
+        array('type' => 'term',
+              'field' => 'entityTypeId',
+              'size' => 10));
 }

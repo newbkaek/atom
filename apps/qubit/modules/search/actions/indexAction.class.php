@@ -22,61 +22,7 @@
  */
 class SearchIndexAction extends DefaultBrowseAction
 {
-  const INDEX_TYPE = 'QubitInformationObject';
-
-  // Arrays not allowed in class constants
-  public static
-    $FACETS = array(
-      'languages' =>
-        array('type' => 'term',
-              'field' => 'i18n.languages',
-              'filter' => 'hideDrafts',
-              'size' => 10),
-      'levels' =>
-        array('type' => 'term',
-              'field' => 'levelOfDescriptionId',
-              'filter' => 'hideDrafts',
-              'size' => 10),
-      'mediatypes' =>
-        array('type' => 'term',
-              'field' => 'digitalObject.mediaTypeId',
-              'filter' => 'hideDrafts',
-              'size' => 10),
-      'digitalobjects' =>
-        array('type' => 'query',
-              'field' => array('hasDigitalObject' => true),
-              'filter' => 'hideDrafts',
-              'populate' => false),
-      'repos' =>
-        array('type' => 'term',
-              'field' => 'repository.id',
-              'filter' => 'hideDrafts',
-              'size' => 10),
-      'places' =>
-        array('type'   => 'term',
-              'field'  => 'places.id',
-              'filter' => 'hideDrafts',
-              'size'   => 10),
-      'subjects' =>
-        array('type'   => 'term',
-              'field'  => 'subjects.id',
-              'filter' => 'hideDrafts',
-              'size'   => 10),
-      'genres' =>
-        array('type'   => 'term',
-              'field'  => 'genres.id',
-              'filter' => 'hideDrafts',
-              'size'   => 10),
-      'creators' =>
-        array('type'   => 'term',
-              'field'  => 'creators.id',
-              'filter' => 'hideDrafts',
-              'size'   => 10),
-      'names' =>
-        array('type'   => 'term',
-              'field'  => 'names.id',
-              'filter' => 'hideDrafts',
-              'size'   => 10));
+  protected $queryClass = 'arElasticSearchPluginQueryInformationObject';
 
   protected function populateFacet($name, $ids)
   {
@@ -156,12 +102,12 @@ class SearchIndexAction extends DefaultBrowseAction
     $queryText->setDefaultOperator('OR');
     arElasticSearchPluginUtil::setAllFields($queryText, $options = array('type' => 'informationObject'));
 
-    $this->queryBool->addMust($queryText);
+    $this->search->queryBool->addMust($queryText);
 
     // Realm filter
     if (isset($request->repos) && ctype_digit($request->repos) && null !== $this->repos = QubitRepository::getById($request->repos))
     {
-      $this->queryBool->addMust(new \Elastica\Query\Term(array('repository.id' => $request->repos)));
+      $this->search->queryBool->addMust(new \Elastica\Query\Term(array('repository.id' => $request->repos)));
 
       // Store realm in user session
       $this->context->user->setAttribute('search-realm', $request->repos);
@@ -169,20 +115,20 @@ class SearchIndexAction extends DefaultBrowseAction
 
     if (isset($request->collection) && ctype_digit($request->collection))
     {
-      $this->queryBool->addMust(new \Elastica\Query\Term(array('ancestors' => $request->collection)));
+      $this->search->queryBool->addMust(new \Elastica\Query\Term(array('ancestors' => $request->collection)));
     }
 
     if (isset($request->onlyMedia))
     {
-      $this->queryBool->addMust(new \Elastica\Query\Term(array('hasDigitalObject' => true)));
+      $this->search->queryBool->addMust(new \Elastica\Query\Term(array('hasDigitalObject' => true)));
     }
 
     $this->handleTopLevelDescriptionsOnlyFilter();
-    $this->query->setQuery($this->queryBool);
+    $this->search->query->setQuery($this->search->queryBool);
 
     // Add suggestion
     // Using setParam since Elastica does not support the suggest API yet
-    $this->query->setParam('suggest', array(
+    $this->search->query->setParam('suggest', array(
       'text' => $request->query,
       'suggestions' => array(
         'term' => array(
@@ -191,15 +137,16 @@ class SearchIndexAction extends DefaultBrowseAction
           'field' => sprintf('i18n.%s.title', $this->selectedCulture)))));
 
     // Filter drafts
-    QubitAclSearch::filterDrafts($this->filterBool);
+    QubitAclSearch::filterDrafts($this->search->filterBool);
 
     // Set filter
-    if (0 < count($this->filterBool->toArray()))
+    if (0 < count($this->search->filterBool->toArray()))
     {
-      $this->query->setFilter($this->filterBool);
-    }
 
-    $resultSet = QubitSearch::getInstance()->index->getType('QubitInformationObject')->search($this->query);
+      $this->search->query->setFilter($this->search->filterBool);
+    }
+ 
+    $resultSet = QubitSearch::getInstance()->index->getType('QubitInformationObject')->search($this->search->query);
 
     // Return special response in JSON for XHR requests
     if ($request->isXmlHttpRequest() && ctype_digit($request->collection))

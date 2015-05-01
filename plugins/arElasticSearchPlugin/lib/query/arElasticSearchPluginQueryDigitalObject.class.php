@@ -17,10 +17,15 @@
  * along with Access to Memory (AtoM).  If not, see <http://www.gnu.org/licenses/>.
  */
 
-class TermBrowseTermAction extends sfAction
+class arElasticSearchPluginQueryDigitalObject extends arElasticSearchPluginQuery
 {
-  public function execute($request)
-  {
-    $this->forward('term','index');
-  }
+  const INDEX_TYPE = 'QubitInformationObject';
+
+  // Arrays not allowed in class constants
+  public static
+    $FACETS = array(
+      'mediatypes' =>
+        array('type' => 'term',
+              'field' => 'digitalObject.mediaTypeId',
+              'size' => 10));
 }

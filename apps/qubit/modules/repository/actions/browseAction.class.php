@@ -25,35 +25,7 @@
  */
 class RepositoryBrowseAction extends DefaultBrowseAction
 {
-  const INDEX_TYPE = 'QubitRepository';
-
-  // Arrays not allowed in class constants
-  public static
-    $FACETS = array(
-      'languages' =>
-        array('type' => 'term',
-              'field' => 'i18n.languages',
-              'size' => 10),
-      'types' =>
-        array('type' => 'term',
-              'field' => 'types',
-              'size' => 10),
-      'regions' =>
-        array('type' => 'term',
-              'field' => 'contactInformations.i18n.en.region.untouched',
-              'size' => 10),
-      'geographicSubregions' =>
-        array('type' => 'term',
-              'field' => 'geographicSubregions',
-              'size' => 10),
-      'locality' =>
-        array('type' => 'term',
-              'field' => 'contactInformations.i18n.en.city.untouched',
-              'size' => 10),
-      'thematicAreas' =>
-        array('type' => 'term',
-              'field' => 'thematicAreas',
-              'size' => 10));
+  protected $queryClass = 'arElasticSearchPluginQueryRepository';
 
   protected function populateFacet($name, $ids)
   {
@@ -96,7 +68,7 @@ class RepositoryBrowseAction extends DefaultBrowseAction
 
     if (1 === preg_match('/^[\s\t\r\n]*$/', $request->subquery))
     {
-      $this->queryBool->addMust(new \Elastica\Query\MatchAll());
+      $this->search->queryBool->addMust(new \Elastica\Query\MatchAll());
     }
     else
     {
@@ -104,7 +76,7 @@ class RepositoryBrowseAction extends DefaultBrowseAction
       $queryText->setDefaultOperator('OR');
       $queryText->setDefaultField('_all');
 
-      $this->queryBool->addMust($queryText);
+      $this->search->queryBool->addMust($queryText);
     }
 
     $i18n = sprintf('i18n.%s.', $this->selectedCulture);
@@ -112,56 +84,56 @@ class RepositoryBrowseAction extends DefaultBrowseAction
     switch ($request->sort)
     {
       case 'nameUp':
-        $this->query->setSort(array($i18n.'authorizedFormOfName.untouched' =>
+        $this->search->query->setSort(array($i18n.'authorizedFormOfName.untouched' =>
                               array('order' => 'asc', 'ignore_unmapped' => true)));
         break;
 
       case 'nameDown':
-        $this->query->setSort(array($i18n.'authorizedFormOfName.untouched' =>
+        $this->search->query->setSort(array($i18n.'authorizedFormOfName.untouched' =>
                               array('order' => 'desc', 'ignore_unmapped' => true)));
         break;
 
       case 'regionUp':
-        $this->query->setSort(array($i18n.'region.untouched' =>
+        $this->search->query->setSort(array($i18n.'region.untouched' =>
                               array('order' => 'asc', 'ignore_unmapped' => true)));
         break;
 
       case 'regionDown':
-        $this->query->setSort(array($i18n.'region.untouched' =>
+        $this->search->query->setSort(array($i18n.'region.untouched' =>
                               array('order' => 'desc', 'ignore_unmapped' => true)));
         break;
 
       case 'localityUp':
-        $this->query->setSort(array($i18n.'city.untouched' =>
+        $this->search->query->setSort(array($i18n.'city.untouched' =>
                               array('order' => 'asc', 'ignore_unmapped' => true)));
         break;
 
       case 'localityDown':
-        $this->query->setSort(array($i18n.'city.untouched' =>
+        $this->search->query->setSort(array($i18n.'city.untouched' =>
                               array('order' => 'desc', 'ignore_unmapped' => true)));
         break;
 
       case 'identifier':
-        $this->query->addSort(array('identifier' => 'asc'));
+        $this->search->query->addSort(array('identifier' => 'asc'));
       case 'alphabetic':
-        $this->query->addSort(array($i18n.'authorizedFormOfName.untouched' => 'asc'));
+        $this->search->query->addSort(array($i18n.'authorizedFormOfName.untouched' => 'asc'));
 
         break;
 
       case 'lastUpdated':
       default:
-        $this->query->setSort(array('updatedAt' => 'desc'));
+        $this->search->query->setSort(array('updatedAt' => 'desc'));
     }
 
-    $this->query->setQuery($this->queryBool);
+    $this->search->query->setQuery($this->search->queryBool);
 
     // Set filter
-    if (0 < count($this->filterBool->toArray()))
+    if (0 < count($this->search->filterBool->toArray()))
     {
-      $this->query->setFilter($this->filterBool);
+      $this->search->query->setFilter($this->filterBool);
     }
 
-    $resultSet = QubitSearch::getInstance()->index->getType('QubitRepository')->search($this->query);
+    $resultSet = QubitSearch::getInstance()->index->getType('QubitRepository')->search($this->search->query);
 
     $this->pager = new QubitSearchPager($resultSet);
     $this->pager->setPage($request->page ? $request->page : 1);

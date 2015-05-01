@@ -19,33 +19,7 @@
 
 class TermIndexAction extends DefaultBrowseAction
 {
-  const INDEX_TYPE = 'QubitInformationObject';
-
-  // Arrays not allowed in class constants
-  public static
-    $FACETS = array(
-      'languages' =>
-        array('type' => 'term',
-              'field' => 'i18n.languages',
-              'filter' => 'hideDrafts',
-              'size' => 10),
-      'places' =>
-        array('type'   => 'term',
-              'field'  => 'places.id',
-              'size'   => 10),
-      'subjects' =>
-        array('type'   => 'term',
-              'field'  => 'subjects.id',
-              'size'   => 10),
-      'genres' =>
-        array('type'   => 'term',
-              'field'  => 'genres.id',
-              'size'   => 10),
-      'direct' =>
-        array('type' => 'query',
-              'field'  => '',
-              'filter' => 'hideDrafts',
-              'populate' => false));
+  protected $queryClass = 'arElasticSearchPluginQueryTerm';
 
   protected function populateFacet($name, $ids)
   {
@@ -224,7 +198,7 @@ EOF;
         {
           case QubitTaxonomy::PLACE_ID:
             $query = new \Elastica\Query\Terms('places.id', array($this->resource->id));
-            $this::$FACETS['direct']['field'] = array('directPlaces' => $this->resource->id);
+            $this->search->FACETS['direct']['field'] = array('directPlaces' => $this->resource->id);
 
             if (isset($request->onlyDirect))
             {
@@ -235,7 +209,7 @@ EOF;
 
           case QubitTaxonomy::SUBJECT_ID:
             $query = new \Elastica\Query\Terms('subjects.id', array($this->resource->id));
-            $this::$FACETS['direct']['field'] = array('directSubjects' => $this->resource->id);
+            $this->search->FACETS['direct']['field'] = array('directSubjects' => $this->resource->id);
 
             if (isset($request->onlyDirect))
             {
@@ -246,7 +220,7 @@ EOF;
 
           case QubitTaxonomy::GENRE_ID:
             $query = new \Elastica\Query\Terms('genres.id', array($this->resource->id));
-            $this::$FACETS['direct']['field'] = array('directSubjects' => $this->resource->id);
+            $this->search->FACETS['direct']['field'] = array('directSubjects' => $this->resource->id);
 
             if (isset($request->onlyDirect))
             {
@@ -258,39 +232,39 @@ EOF;
 
         parent::execute($request);
 
-        $this->queryBool->addMust($query);
+        $this->search->queryBool->addMust($query);
 
         if(isset($queryDirect))
         {
-          $this->queryBool->addMust($queryDirect);
+          $this->search->queryBool->addMust($queryDirect);
         }
 
-        $this->query->setQuery($this->queryBool);
+        $this->search->query->setQuery($this->search->queryBool);
 
         switch ($request->sort)
         {
           // I don't think that this is going to scale, but let's leave it for now
           case 'alphabetic':
             $field = sprintf('i18n.%s.title.untouched', $this->culture);
-            $this->query->setSort(array($field => 'asc'));
+            $this->search->query->setSort(array($field => 'asc'));
 
             break;
 
           case 'lastUpdated':
           default:
-            $this->query->setSort(array('updatedAt' => 'desc'));
+            $this->search->query->setSort(array('updatedAt' => 'desc'));
         }
 
         // Filter drafts
-        QubitAclSearch::filterDrafts($this->filterBool);
+        QubitAclSearch::filterDrafts($this->search->filterBool);
 
         // Set filter
-        if (0 < count($this->filterBool->toArray()))
+        if (0 < count($this->search->filterBool->toArray()))
         {
-          $this->query->setFilter($this->filterBool);
+          $this->search->query->setFilter($this->search->filterBool);
         }
 
-        $resultSet = QubitSearch::getInstance()->index->getType('QubitInformationObject')->search($this->query);
+        $resultSet = QubitSearch::getInstance()->index->getType('QubitInformationObject')->search($this->search->query);
 
         // Page results
         $this->pager = new QubitSearchPager($resultSet);

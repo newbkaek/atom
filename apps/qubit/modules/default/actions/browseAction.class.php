@@ -19,116 +19,6 @@
 
 class DefaultBrowseAction extends sfAction
 {
-  protected function addFacets()
-  {
-    foreach ($this::$FACETS as $name => $item)
-    {
-      if (!is_array($item))
-      {
-        $facet = new \Elastica\Facet\Terms($item);
-        $facet->setField($item);
-        $facet->setSize(10);
-
-        $this->query->addFacet($facet);
-
-        continue;
-      }
-
-      switch ($item['type'])
-      {
-        case 'range':
-          $facet = new \Elastica\Facet\Range($name);
-          $facet->setField($item['field']);
-          $facet->addRange($item['from'], $item['to']);
-
-          break;
-
-        case 'term':
-          $facet = new \Elastica\Facet\Terms($name);
-          $facet->setField($item['field']);
-
-          break;
-
-        case 'query':
-          $facet = new \Elastica\Facet\Query($name);
-          $facet->setQuery(new \Elastica\Query\Term($item['field']));
-
-          break;
-      }
-
-      // Sets the amount of terms to be returned
-      if (isset($item['size']))
-      {
-        $facet->setSize($item['size']);
-      }
-
-      $filter = new \Elastica\Filter\Bool;
-
-      // Sets a filter for this facet
-      if (isset($item['filter']))
-      {
-        switch ($item['filter'])
-        {
-          case 'hideDrafts':
-            QubitAclSearch::filterDrafts($filter);
-          break;
-        }
-      }
-
-      // Only add language filter to facets if languages is set
-      if ($name != 'languages' && isset($this->request->languages))
-      {
-        $term = new \Elastica\Filter\Term(array('i18n.languages' => $this->request->languages));
-        $filter->addMust($term);
-      }
-
-      // Apply facet filter if exists
-      if (0 < count($filter->toArray()))
-      {
-        $facet->setFilter($filter);
-      }
-
-      $this->query->addFacet($facet);
-    }
-  }
-
-  protected function addFilters()
-  {
-    $this->filters = array();
-
-    // Filter languages only if the languages facet is being used and languages is set in the request
-    if (isset($this::$FACETS['languages']) && isset($this->request->languages))
-    {
-      $this->filters['languages'] = $this->request->languages;
-      $term = new \Elastica\Filter\Term(array($this::$FACETS['languages']['field'] => $this->request->languages));
-
-      $this->filterBool->addMust($term);
-    }
-
-    foreach ($this->request->getGetParameters() as $param => $value)
-    {
-      if ('languages' == $param || !array_key_exists($param, $this::$FACETS) || ('repos' == $param && (!ctype_digit($value) || null === QubitRepository::getById($value))))
-      {
-        continue;
-      }
-
-      foreach (explode(',', $value) as $facetValue)
-      {
-        // Don't include empty filters
-        if (1 === preg_match('/^[\s\t\r\n]*$/', $facetValue))
-        {
-          continue;
-        }
-
-        $this->filters[$param][] = $facetValue;
-
-        $term = new \Elastica\Query\Term(array($this::$FACETS[$param]['field'] => $facetValue));
-
-        $this->queryBool->addMust($term);
-      }
-    }
-  }
-
   protected function populateFacets($resultSet)
   {
     // Stop if no facets available
@@ -150,7 +40,7 @@ class DefaultBrowseAction extends sfAction
         continue;
       }
 
-      if (isset($this::$FACETS[$name]['populate']) && false === $this::$FACETS[$name]['populate'])
+      if (isset($this->search->FACETS[$name]['populate']) && false === $this->search->FACETS[$name]['populate'])
       {
         $facets[$name] = $facet;
 
@@ -178,27 +68,27 @@ class DefaultBrowseAction extends sfAction
       {
         // If the query is being filtered by language we need to execute
         // the same query again without language filter to get the count
-        if (isset($this->filters['languages']))
+        if (isset($this->search->filters['languages']))
         {
           // We're only filtering draft descriptions and other languages, so:
           // Remove old filter (with language)
-          $queryParams = $this->query->getParams();
+          $queryParams = $this->search->query->getParams();
           unset($queryParams['filter']);
-          $this->query->setRawQuery($queryParams);
+          $this->search->query->setRawQuery($queryParams);
 
           // Create and add a new one only with drafts filtered (only for information object queries)
-          if ($this::INDEX_TYPE == 'QubitInformationObject')
+          if ($this->search->INDEX_TYPE == 'QubitInformationObject')
           {
             $this->filterBool = new \Elastica\Filter\Bool;
             QubitAclSearch::filterDrafts($this->filterBool);
 
             if (0 < count($this->filterBool->toArray()))
             {
-              $this->query->setFilter($this->filterBool);
+              $this->search->query->setFilter($this->filterBool);
             }
           }
 
-          $resultSetWithoutLanguageFilter = QubitSearch::getInstance()->index->getType($this::INDEX_TYPE)->search($this->query);
+          $resultSetWithoutLanguageFilter = QubitSearch::getInstance()->index->getType($this->search->INDEX_TYPE)->search($this->search->query);
 
           $facets[$name]['terms']['unique'] = array(
             'count' => $resultSetWithoutLanguageFilter->getTotalHits(),
@@ -243,7 +133,6 @@ class DefaultBrowseAction extends sfAction
     $this->topLvlDescUrl = $this->context->routing->generate(null, array('topLod' => true) +
                            $this->request->getParameterHolder()->getAll());
 
-
     $this->allLvlDescUrl = $this->context->routing->generate(null, array('topLod' => false) +
                            $this->request->getParameterHolder()->getAll());
 
@@ -252,7 +141,7 @@ class DefaultBrowseAction extends sfAction
       $this->checkedTopDesc = 'checked';
       $this->checkedAllDesc = '';
 
-      $this->queryBool->addMust(new \Elastica\Query\Term(array('parentId' => QubitInformationObject::ROOT_ID)));
+      $this->search->queryBool->addMust(new \Elastica\Query\Term(array('parentId' => QubitInformationObject::ROOT_ID)));
     }
     else
     {
@@ -288,31 +177,22 @@ class DefaultBrowseAction extends sfAction
       $request->sort = $this->sortSetting;
     }
 
-    $this->query = new \Elastica\Query();
-    $this->query->setLimit($request->limit);
-
-    if (!empty($request->page))
+    // Child classes may or may utilize ElasticSearch queries
+    if (isset($this->queryClass))
     {
-      $this->query->setFrom(($request->page - 1) * $request->limit);
-    }
+      $queryClass = $this->queryClass;
+      $this->search = new $queryClass($request->limit, $request->page);
 
-    $this->queryBool = new \Elastica\Query\Bool();
-    $this->filterBool = new \Elastica\Filter\Bool;
+      $this->search->addFilters($this->request->getGetParameters());
 
-    if (isset($this::$FACETS))
-    {
-      $this->addFacets();
-
-      $this->addFilters();
-    }
-
-    if (isset($this->filters['languages']))
-    {
-      $this->selectedCulture = $this->filters['languages'];
-    }
-    else
-    {
-      $this->selectedCulture = $this->context->user->getCulture();
+      if (isset($this->filters['languages']))
+      {
+        $this->selectedCulture = $this->filters['languages'];
+      }
+      else
+      {
+        $this->selectedCulture = $this->context->user->getCulture();
+      }
     }
   }
 }
