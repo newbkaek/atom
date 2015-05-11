@@ -111,7 +111,7 @@
     </div>
 
     <div id="advancedRepositoryFilters" class="row">
-      <?php echo get_partial('repository/advancedFilters', array('thematicAreas' => $thematicAreas,
+      <?php echo get_component('repository', 'advancedFilters', array('thematicAreas' => $thematicAreas,
                              'repositories' => $repositories, 'repositoryTypes' => $repositoryTypes) +
                              $sf_data->getRaw('sf_request')->getParameterHolder()->getAll()) ?>
     </div>

@@ -12,10 +12,10 @@
   </div>
 </div>
 
-<form>
-  <input type="hidden" name="view" value="<?php echo $sf_data->getRaw('sf_request')->getParameter('view') ?>">
-  <input type="hidden" name="sort" value="<?php echo $sf_data->getRaw('sf_request')->getParameter('sort') ?>">
-  <input type="hidden" name="limit" value="<?php echo $sf_data->getRaw('sf_request')->getParameter('limit') ?>">
+<form method="get">
+  <?php foreach ($params as $paramName => $paramValue): ?>
+    <?php echo '<input type="hidden" name="'.$paramName.'" value="'.$paramValue.'">' ?>
+  <?php endforeach; ?>
 
   <div class="row">
     <div class="span3">
