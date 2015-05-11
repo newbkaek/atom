@@ -186,8 +186,8 @@ class RepositoryBrowseAction extends DefaultBrowseAction
   {
     $limit = 500;
 
-    $this->thematicAreas = QubitTerm::getTermsByTaxonomyId(QubitTaxonomy::THEMATIC_AREA_ID, $limit);
-    $this->repositoryTypes = QubitTerm::getTermsByTaxonomyId(QubitTaxonomy::REPOSITORY_TYPE_ID, $limit);
+    $this->thematicAreas = QubitTerm::getEsTermsByTaxonomyId(QubitTaxonomy::THEMATIC_AREA_ID, $limit);
+    $this->repositoryTypes = QubitTerm::getEsTermsByTaxonomyId(QubitTaxonomy::REPOSITORY_TYPE_ID, $limit);
 
     $query = new \Elastica\Query(new \Elastica\Query\MatchAll);
     $query->setLimit($limit);

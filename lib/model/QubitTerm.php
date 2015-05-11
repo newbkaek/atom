@@ -932,7 +932,7 @@ class QubitTerm extends BaseTerm
   /**
    * Get terms by taxonomy id. This function gets its results from ElasticSearch.
    */
-  public static function getTermsByTaxonomyId($taxonomyId, $limit = 10)
+  public static function getEsTermsByTaxonomyId($taxonomyId, $limit = 10)
   {
     $queryBool = new \Elastica\Query\Bool;
     $queryTerm = new \Elastica\Query\Term;
