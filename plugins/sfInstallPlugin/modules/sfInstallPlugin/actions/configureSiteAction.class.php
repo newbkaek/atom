@@ -26,18 +26,22 @@ class sfInstallPluginConfigureSiteAction extends sfAction
     $this->form->setValidator('confirmPassword', new sfValidatorString(array('required' => true)));
     $this->form->setWidget('confirmPassword', new sfWidgetFormInputPassword);
 
+    $this->form->setDefault('email', 'atom@example.com');
     $this->form->setValidator('email', new sfValidatorEmail(array('required' => true)));
     $this->form->setWidget('email', new sfWidgetFormInput);
 
     $this->form->setValidator('password', new sfValidatorString(array('required' => true)));
     $this->form->setWidget('password', new sfWidgetFormInputPassword);
 
+    $this->form->setDefault('siteDescription', 'AtoM');
     $this->form->setValidator('siteDescription', new sfValidatorString);
     $this->form->setWidget('siteDescription', new sfWidgetFormInput);
 
+    $this->form->setDefault('siteTitle', 'AtoM');
     $this->form->setValidator('siteTitle', new sfValidatorString(array('required' => true)));
     $this->form->setWidget('siteTitle', new sfWidgetFormInput);
 
+    $this->form->setDefault('username', 'atom');
     $this->form->setValidator('username', new sfValidatorString(array('required' => true)));
     $this->form->setWidget('username', new sfWidgetFormInput);
 

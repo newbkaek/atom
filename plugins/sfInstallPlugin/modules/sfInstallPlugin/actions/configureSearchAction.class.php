@@ -29,7 +29,7 @@ class sfInstallPluginConfigureSearchAction extends sfAction
     // anyone can access install actions if the database can't be accessed.
     // Never expose the search configuration, even to administrators
 
-    $this->form->setDefault('searchHost', 'localhost');
+    $this->form->setDefault('searchHost', '127.0.0.1');
     $this->form->setValidator('searchHost', new sfValidatorString);
     $this->form->setWidget('searchHost', new sfWidgetFormInput);
 
