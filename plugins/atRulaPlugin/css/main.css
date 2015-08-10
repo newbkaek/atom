@@ -7723,6 +7723,7 @@ header #logo {
 }
 #site-name a {
   color: #1c5793;
+  white-space: nowrap;
 }
 #site-slogan {
   background-color: #161514;
