@@ -286,8 +286,8 @@ body {
   font-family: "Open Sans Regular", "Helvetica Neue", Helvetica, Arial, sans-serif;
   font-size: 15px;
   line-height: 20px;
-  color: #333333;
-  background-color: #ffffff;
+  color: #555555;
+  background-color: #fcfcfc;
 }
 a {
   color: #1c5793;
@@ -5990,9 +5990,9 @@ a.badge:focus {
  * along with Access to Memory (AtoM).  If not, see <http://www.gnu.org/licenses/>.
  */
 #wrapper {
-  background-image: url('../images/separator.png');
+  /*background-image: url('../images/separator.png');
   background-repeat: no-repeat;
-  background-position: top center;
+  background-position: top center;*/
 }
 footer {
   min-height: 40px;
@@ -7144,7 +7144,7 @@ body.login #content .form-actions {
 #update-check {
   background-color: #ff8800;
   color: #000000;
-  border-bottom: 1px solid #e4e4e4;
+  /*border-bottom: 1px solid #e4e4e4;*/
   text-align: center;
 }
 #update-check span {
@@ -7701,7 +7701,7 @@ h1 .count {
 #top-bar {
   padding-right: 20px;
   padding-left: 20px;
-  height: 60px;
+  height: 50px;
   background-color: #e6e6e6;
   background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#fff), color-stop(50%, #eee), to(#e4e4e4));
   background-image: -webkit-linear-gradient(#fff, #eee 50%, #e4e4e4);
@@ -7713,6 +7713,10 @@ header #logo {
   display: block;
   float: left;
   margin: 0 10px 0 8px;
+}
+#logo img {
+  height: 40px;
+  padding-top: 4px;
 }
 #site-name {
   font-size: 20px;
