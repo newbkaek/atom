@@ -7716,13 +7716,13 @@ header #logo {
 }
 #logo img {
   height: 40px;
-  padding-top: 4px;
+  padding-top: 5px;
 }
 #site-name {
-  font-size: 20px;
+  font-size: 1.45em;
   margin: 0;
   float: left;
-  margin: 8px 0 0 4px;
+  margin: 6px 0 0 4px;
   padding-right: 10px;
 }
 #site-name a {
