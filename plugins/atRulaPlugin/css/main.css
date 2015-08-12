@@ -7712,7 +7712,7 @@ h1 .count {
 header #logo {
   display: block;
   float: left;
-  margin: 0 10px 0 8px;
+  margin: 0 10px 0 0px;
 }
 #logo img {
   height: 40px;
