@@ -1100,14 +1100,15 @@ EOF;
 
     $import->csv($fh, $skipRows);
 
+    // Comment this block out we will build the nested set after importing
     // build nested set if desired
-    if (!$options['skip-nested-set-build'])
-    {
-      $buildNestedSet = new propelBuildNestedSetTask($this->dispatcher, $this->formatter);
-      $buildNestedSet->setCommandApplication($this->commandApplication);
-      $buildNestedSet->setConfiguration($this->configuration);
-      $ret = $buildNestedSet->run();
-    }
+    // if (!$options['skip-nested-set-build'])
+    // {
+    //   $buildNestedSet = new propelBuildNestedSetTask($this->dispatcher, $this->formatter);
+    //   $buildNestedSet->setCommandApplication($this->commandApplication);
+    //   $buildNestedSet->setConfiguration($this->configuration);
+    //   $ret = $buildNestedSet->run();
+    // }
   }
 }
 
