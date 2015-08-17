@@ -7884,9 +7884,13 @@ nav > div {
 #node_browseFunctions {
   display: none;
 }
-#sidebar section:not([class]) {
+/*
+TODO: Add ID to browse by block so we can hide it
+
+#sidebar section#browse-by {
 	display: none;
 }
+*/
 section#popular-this-week {
 	background-color: #f8f8f8;
 	border: 1px solid #d9d9d9;
