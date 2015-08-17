@@ -16,7 +16,27 @@
 
     <!-- Hacky inline styles -->
     <style type="text/css">
-      .mainsearch { margin-top: 25px; }
+
+      .main #browse-menu {
+        position: relative;
+        border: 1px solid #ccc;
+        border-radius: 5px;
+        width: 100%;
+      }
+
+      .main .top-item {
+        margin: 0;
+      }
+
+      .main .top-dropdown, 
+      .main a.top-dropdown:link, 
+      .main a.top-dropdown:visited, 
+      .main a.top-dropdown:active {
+        padding: 0;
+        line-height: 28px;
+        width: 100%;
+      }
+
       #search-form-wrapper {
         position: relative;
       }
@@ -46,9 +66,11 @@
       .search-popover {
         top: 30px;
       }
+
       #search-bar .search-popover {
         top: 25px;
       }
+
     </style>
   </head>
 
@@ -57,24 +79,24 @@
     <?php echo get_partial('header') ?>
 
     <div class="container">
+
+      <div class="row main">
+        <div class="span2">
+          <?php echo get_component('menu', 'browseMenu', array('sf_cache_key' => $sf_user->getCulture().$sf_user->getUserID())) ?>
+        </div>
+        <div class="span10">
+          <?php echo get_component('search', 'box') ?>
+        </div>
+      </div>
+
       <div class="row">
-        
-        <div class="span3">
-          <?php include_slot('sidebar') ?>
+        <div class="span12">
+          <?php if (!include_slot('content')) : ?>
+            <?php echo $sf_content ?>
+          <?php endif; ?>
         </div>
-
-        <div class="span9">
-          <div class="mainsearch">
-            <?php echo get_component('search', 'box') ?>
-          </div>
-          <div class="homecontent">
-            <?php if (!include_slot('content')) : ?>
-              <?php echo $sf_content ?>
-            <?php endif; ?>
-          </div>
-        </div>
-
       </div>  
+
     </div>
 
     <?php echo get_partial('footer') ?>

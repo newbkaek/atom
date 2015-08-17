@@ -6,9 +6,39 @@
 	</div>
 <?php endif; ?>
 
+<style type="text/css">
+	.header-wrap {
+    background-color: #e6e6e6;
+    background-image: -webkit-gradient(linear, 0 0, 0 100%, from(#fff), color-stop(50%, #eee), to(#e4e4e4));
+    background-image: -webkit-linear-gradient(#fff, #eee 50%, #e4e4e4);
+    background-image: -moz-linear-gradient(top, #fff, #eee 50%, #e4e4e4);
+    background-image: linear-gradient(#fff, #eee 50%, #e4e4e4);
+    background-repeat: no-repeat;
+	}
+	header.rula {
+		height:50px; 
+	}
+</style>
+
+<div class="header-wrap">
+	<header class="rula container">
+		<div class="row">
+			<div class="span2">
+				<?php if (sfConfig::get('app_toggleLogo')): ?>
+					<?php echo link_to(image_tag('/plugins/atRulaPlugin/images/logo.png'), '@homepage', array('id' => 'logo', 'rel' => 'home')) ?>
+				<?php endif; ?>
+			</div>
+			<div class="span10">
+				<?php echo get_component('menu', 'userMenu') ?>
+				<?php echo get_component('menu', 'mainMenu', array('sf_cache_key' => $sf_user->getCulture().$sf_user->getUserID())) ?>
+			</div>
+		</div>	
+	</header>
+</div>
+
+<?php /*
 <header id="top-bar">
 	<div id="subhead">
-
 		<?php if (sfConfig::get('app_toggleLogo')): ?>
 			<?php echo link_to(image_tag('/plugins/atRulaPlugin/images/logo.png'), '@homepage', array('id' => 'logo', 'rel' => 'home')) ?>
 		<?php endif; ?>
@@ -26,12 +56,13 @@
 			<?php echo get_component('menu', 'mainMenu', array('sf_cache_key' => $sf_user->getCulture().$sf_user->getUserID())) ?>
 		</nav>
 
-		<div id="search-bar">
+<!-- 		<div id="search-bar">
 			<?php echo get_component('menu', 'browseMenu', array('sf_cache_key' => $sf_user->getCulture().$sf_user->getUserID())) ?>
 			<?php echo get_component('search', 'box') ?>
-		</div>
+		</div> -->
 
 		<?php echo get_component_slot('header') ?>
 		
 	</div>
 </header>
+*/ ?>
