@@ -7884,7 +7884,7 @@ nav > div {
 #node_browseFunctions {
   display: none;
 }
-#sidebar section:not(#popular-this-week):not(#facets) {
+#sidebar section:not([class]) {
 	display: none;
 }
 section#popular-this-week {
