@@ -16,7 +16,9 @@
 
     <!-- Hacky inline styles -->
     <style type="text/css">
-
+      .main {
+        margin-top: 15px;
+      }
       .main #browse-menu {
         position: relative;
         border: 1px solid #ccc;
@@ -32,9 +34,10 @@
       .main a.top-dropdown:link, 
       .main a.top-dropdown:visited, 
       .main a.top-dropdown:active {
-        padding: 0;
+        padding: 0 0 0 12px;
         line-height: 28px;
         width: 100%;
+        box-sizing: border-box;
       }
 
       #search-form-wrapper {
@@ -71,6 +74,11 @@
         top: 25px;
       }
 
+      @media (max-width: 767px) {
+        #search-form-wrapper {
+          margin-top: 10px;
+        }
+      }
     </style>
   </head>
 
@@ -81,10 +89,10 @@
     <div class="container">
 
       <div class="row main">
-        <div class="span2">
+        <div class="span2 clearfix">
           <?php echo get_component('menu', 'browseMenu', array('sf_cache_key' => $sf_user->getCulture().$sf_user->getUserID())) ?>
         </div>
-        <div class="span10">
+        <div class="span10 clearfix">
           <?php echo get_component('search', 'box') ?>
         </div>
       </div>
