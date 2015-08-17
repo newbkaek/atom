@@ -7899,7 +7899,11 @@ section#popular-this-week {
 	margin-top: 15px;
 }
 section#popular-this-week h3 {
-	margin: 0px;
+	margin: 0 0 0 10px;
+}
+
+section#popular-this-week ul li a strong {
+	white-space: nowrap;
 }
 
 #quick-links-menu,
