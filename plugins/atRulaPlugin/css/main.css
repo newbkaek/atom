@@ -7904,6 +7904,8 @@ section#popular-this-week h3 {
 
 section#popular-this-week ul li a strong {
 	white-space: nowrap;
+	font-size: 0.8em;
+	color: #666;
 }
 
 #quick-links-menu,
