@@ -19,24 +19,34 @@
 		height:50px; 
 	}
 
-	/*.rula #user-menu { margin-right: 0; }*/
+	.rula #user-menu { margin-right: 0; }
+	@media (max-width: 767px) {
+		.span6.logo {
+			width: 25%;
+			float: left;
+		}
+		.span6.nav {
+			width: 75%;
+			float: left;
+		}
+	}
 </style>
 
 <div class="header-wrap">
 	<header class="rula container">
 		<div class="row">
-			<div class="span6">
+			<div class="span6 logo">
 				<?php if (sfConfig::get('app_toggleLogo')): ?>
 					<?php echo link_to(image_tag('/plugins/atRulaPlugin/images/logo.png'), '@homepage', array('id' => 'logo', 'rel' => 'home')) ?>
 				<?php endif; ?>
 
 				<?php if (sfConfig::get('app_toggleTitle')): ?>
-					<h1 id="site-name">
+					<h1 id="site-name" class="hidden-tablet hidden-phone">
 						<?php echo link_to('<span>'.esc_specialchars(sfConfig::get('app_siteTitle')).'</span>', '@homepage', array('rel' => 'home', 'title' => __('Home'))) ?>
 					</h1>
 				<?php endif; ?>
 			</div>
-			<div class="span6">
+			<div class="span6 nav">
 				<nav>
 					<?php echo get_component('menu', 'userMenu') ?>
 					<?php echo get_component('menu', 'mainMenu', array('sf_cache_key' => $sf_user->getCulture().$sf_user->getUserID())) ?>
