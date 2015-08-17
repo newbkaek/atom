@@ -19,7 +19,11 @@
 		height:50px; 
 	}
 
-	.rula #user-menu { margin-right: 0; }
+	.rula .nav { 
+		margin-left: 20px; 
+		margin-bottom: 0;
+	}
+	.rula #user-menu > a { margin-right: 0; }
 	@media (max-width: 767px) {
 		.span6.logo {
 			width: 25%;
