@@ -43,6 +43,14 @@
       #search-form-wrapper {
         position: relative;
       }
+
+      #search-form-wrapper form {
+        margin-bottom: 0;
+      }
+
+      #search-form-wrapper input {
+        margin-bottom: 0;
+      }
       
       #search-form-wrapper button {
         display: block;
@@ -77,6 +85,12 @@
       @media (max-width: 767px) {
         #search-form-wrapper {
           margin-top: 10px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        #browse-menu > a {
+          text-indent: 0;
         }
       }
     </style>
