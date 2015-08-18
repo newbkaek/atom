@@ -108,7 +108,7 @@
 			float: left;
 		}
 		.span6.nav {
-			width: 75%;
+			width: 69%;
 			float: left;
 		}
 	}
