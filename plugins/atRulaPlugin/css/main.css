@@ -58,7 +58,7 @@ section#popular-this-week h3 {
 	font-size: 1.2em;
 }
 
-section#popular-this-week ul li a strong {
+section#popular-this-week strong {
 	white-space: nowrap;
 	font-size: 0.8em;
 	color: #666;

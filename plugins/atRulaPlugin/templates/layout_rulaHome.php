@@ -23,9 +23,9 @@
 
     <div class="container">
       <div class="row">
-		<div class="span2">
-		  <?php echo get_component('default', 'popular', array('limit' => 10, 'sf_cache_key' => $sf_user->getCulture())) ?>
-		</div>
+        <div class="span2">
+          <?php echo get_component('default', 'popular', array('limit' => 10, 'sf_cache_key' => $sf_user->getCulture())) ?>
+        </div>
         <div class="span10">
           <?php if (!include_slot('content')) : ?>
             <?php echo $sf_content ?>
