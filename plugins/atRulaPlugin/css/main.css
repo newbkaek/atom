@@ -53,6 +53,16 @@ nav,
 section {
   display: block;
 }
+section#popular-this-week h3 {
+	margin-left: 8px;
+	font-size: 1.2em;
+}
+
+section#popular-this-week strong {
+	white-space: nowrap;
+	font-size: 0.8em;
+	color: #666;
+}
 audio,
 canvas,
 video {
