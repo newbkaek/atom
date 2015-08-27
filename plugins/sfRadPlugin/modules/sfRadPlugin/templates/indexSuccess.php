@@ -313,7 +313,6 @@
 
 <section id="standardNumberArea">
 
-
   <?php if (check_field_visibility('app_element_visibility_rad_standard_number_area')): ?>
     <?php echo link_to_if(SecurityPriviliges::editCredentials($sf_user, 'informationObject'), '<h2>'.__('Standard number area').'</h2>', array($resource, 'module' => 'informationobject', 'action' => 'edit'), array('anchor' => 'standardNumberArea', 'title' => __('Edit standard number area'))) ?>
   <?php endif; ?>
