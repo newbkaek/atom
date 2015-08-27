@@ -282,6 +282,9 @@ class sfRadPluginEditAction extends InformationObjectEditAction
 
     $this->otherNotesComponent->processForm();
 
+    /* hackyhacky! Put archivist notes into RAD template visually :) */
+    $this->archivistsNotesComponent->processForm();
+
     return parent::processForm();
   }
 
