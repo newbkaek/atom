@@ -288,6 +288,9 @@
 
         <?php echo get_partial('informationobject/notes', $sf_data->getRaw('otherNotesComponent')->getVarHolder()->getAll()) ?>
 
+        <?php /* hackyhacky! Put archivist notes into RAD template visually :) */ ?>
+        <?php echo get_partial('informationobject/notes', $sf_data->getRaw('archivistsNotesComponent')->getVarHolder()->getAll()) ?>
+
       </fieldset> <!-- #notesArea -->
 
       <fieldset class="collapsible collapsed" id="standardNumberArea">

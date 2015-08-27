@@ -300,10 +300,19 @@
   <?php endforeach; ?>
 
   <?php echo get_partial('informationobject/alternativeIdentifiersIndex', array('resource' => $resource)) ?>
-
+  
+  <?php /* hackyhacky! Put archivist notes into RAD template visually :) */ ?>
+  <?php if ($sf_user->isAuthenticated()): ?>
+    <?php if (check_field_visibility('app_element_visibility_isad_control_archivists_notes')): ?>
+      <?php foreach ($resource->getNotesByType(array('noteTypeId' => QubitTerm::ARCHIVIST_NOTE_ID)) as $item): ?>
+        <?php echo render_show(__('Archivist\'s note'), render_value($item->getContent(array('cultureFallback' => true)))) ?>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  <?php endif; ?>
 </section> <!-- /section#notesArea -->
 
 <section id="standardNumberArea">
+
 
   <?php if (check_field_visibility('app_element_visibility_rad_standard_number_area')): ?>
     <?php echo link_to_if(SecurityPriviliges::editCredentials($sf_user, 'informationObject'), '<h2>'.__('Standard number area').'</h2>', array($resource, 'module' => 'informationobject', 'action' => 'edit'), array('anchor' => 'standardNumberArea', 'title' => __('Edit standard number area'))) ?>
@@ -388,7 +397,6 @@
   <?php if (check_field_visibility('app_element_visibility_rad_control_sources')): ?>
     <?php echo render_show(__('Sources'), render_value($resource->getSources(array('cultureFallback' => true)))) ?>
   <?php endif; ?>
-
 </section> <!-- /section#descriptionControlArea -->
 
 <?php if ($sf_user->isAuthenticated()): ?>
