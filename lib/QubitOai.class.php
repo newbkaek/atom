@@ -212,7 +212,7 @@ class QubitOai
    */
   public static function getOaiSets()
   {
-    $collections = QubitInformationObject::getCollections();
+	$collections = QubitOai::getCollectionsWithoutACL();
     $oaiSets = array();
 
     foreach ($collections as $collection)
@@ -231,6 +231,29 @@ class QubitOai
 
     return $oaiSets;
   }
+
+  /**
+   * Get all info objects that have the root node as a parent, and have children
+   * (not orphans). +++ WITHOUT CHECKING ACL +++
+   *
+   * This replicates code from InformationObject::getCollections() for use only here
+   *
+   * @return array collection of QubitInformationObjects
+   */
+  public static function getCollectionsWithoutACL()
+  {
+    $criteria = new Criteria;
+    $criteria->addAlias('parent', QubitInformationObject::TABLE_NAME);
+    $criteria->addJoin(QubitInformationObject::PARENT_ID, 'parent.id');
+
+    // For a node with no children: rgt = (lft+1); therefore search for nodes
+    // with: rgt > (lft+1)
+    $criteria->add(QubitInformationObject::RGT, QubitInformationObject::RGT.' > ('.QubitInformationObject::LFT.' + 1)', Criteria::CUSTOM);
+    $criteria->add('parent.lft', 1);
+
+    return QubitInformationObject::get($criteria);
+  }
+
 
   /**
    * Add a new OAI set to the available list
@@ -291,7 +314,7 @@ class QubitOai
 
   public static function getSampleIdentifier()
   {
-    $sampleIdentifier = sfContext::getInstance()->request->getHost().':';
+    $sampleIdentifier = 'oai:' . sfContext::getInstance()->request->getHost().':';
     if ($repositoryCode = sfConfig::get('app_oai_oai_repository_code'))
     {
       $sampleIdentifier .= $repositoryCode;
