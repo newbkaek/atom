@@ -38,8 +38,6 @@ class arOaiPluginlistSetsComponent extends arOaiPluginComponent
 
     $this->setUpdateParametersFromRequest($request);
 
-    $this->getUpdates();
-
     $this->path = $request->getUriPrefix().$request->getPathInfo();
 
     $this->setRequestAttributes($request);
