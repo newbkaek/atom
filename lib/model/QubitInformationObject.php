@@ -2464,7 +2464,7 @@ class QubitInformationObject extends BaseInformationObject
   public function getOaiIdentifier()
   {
     $domain = sfContext::getInstance()->request->getHost();
-    $oaiRepositoryCode = QubitSetting::getByName('oai_repository_code')->getValue(array('sourceCulture'=>true));
+	$oaiRepositoryCode = sfConfig::get('app_oai_oai_repository_code');
     $oaiIdentifier = 'oai:'.$domain.':'.$oaiRepositoryCode.'_'.$this->getOaiLocalIdentifier();
 
     return $oaiIdentifier;

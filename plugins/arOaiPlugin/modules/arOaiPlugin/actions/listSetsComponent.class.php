@@ -24,7 +24,7 @@
  * @subpackage oai
  * @author     Mathieu Fortin Library and Archives Canada <mathieu.fortin@lac-bac.gc.ca>
  */
-class arOaiPluginlistSetsComponent extends sfComponent
+class arOaiPluginlistSetsComponent extends arOaiPluginComponent
 {
   /**
    * Executes action
@@ -34,16 +34,13 @@ class arOaiPluginlistSetsComponent extends sfComponent
   public function execute($request)
   {
     $request->setRequestFormat('xml');
-    $this->date = QubitOai::getDate();
-    $this->path = $this->request->getUriPrefix().$this->request->getPathInfo();
+    $this->date = gmdate('Y-m-d\TH:i:s\Z');
 
-    $this->attributes = $this->request->getGetParameters();
-    $this->attributesKeys = array_keys($this->attributes);
-    $this->requestAttributes = '';
-    foreach ($this->attributesKeys as $key)
-    {
-      $this->requestAttributes .= ' '.$key.'="'.$this->attributes[$key].'"';
-    }
+    $this->setUpdateParametersFromRequest($request);
+
+    $this->path = $request->getUriPrefix().$request->getPathInfo();
+
+    $this->setRequestAttributes($request);
 
     $this->sets = QubitOAI::getOaiSets();
   }
