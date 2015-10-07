@@ -142,7 +142,7 @@
 
     <?php 
       // Hackyhacky hack to hack in InformationObject reference code into accessions view.
-      $identifier = QubitInformationObject::getById( $item->subjectId )->__get('identifier') 
+      $identifier = QubitInformationObject::getById( $item->subjectId )->__get('identifier');
     ?>
 
     <div class="field">
