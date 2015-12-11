@@ -257,7 +257,7 @@ class QubitInformationObject extends BaseInformationObject
 
     // Save updated related events (update search index after updating all
     // related objects that are included in the index document)
-    foreach ($this->events as $item)
+    foreach ($this->eventsRelatedByobjectId as $item)
     {
       $item->indexOnSave = false;
 
@@ -1208,32 +1208,14 @@ class QubitInformationObject extends BaseInformationObject
   public function getDescendentDigitalObjectCount()
   {
     $sql = '
-      SELECT id FROM information_object
-      WHERE lft > ? and rgt < ?
+      SELECT COUNT(d.id) FROM information_object i
+      INNER JOIN digital_object d ON i.id=d.information_object_id
+      WHERE i.lft > ? and i.rgt < ?
     ';
 
-    $rows = QubitPdo::fetchAll($sql, array($this->lft, $this->rgt));
+    $params = array($this->lft, $this->rgt);
 
-    // Convert SQL rows into just an array of integers with all the ids...
-    $ids = array_map(
-      function($row)
-      {
-        return (int)$row->id;
-      },
-      $rows
-    );
-
-    if (!count($ids))
-    {
-      return 0;
-    }
-
-    $sql = '
-      SELECT count(1) FROM digital_object
-      WHERE information_object_id IN (' . implode(',', $ids) . ')
-    ';
-
-    return QubitPdo::fetchColumn($sql);
+    return QubitPdo::fetchColumn($sql, $params);
   }
 
   /****************
@@ -1468,7 +1450,7 @@ class QubitInformationObject extends BaseInformationObject
    */
   private function getActorByNameAndEvent($name)
   {
-    foreach ($this->events as $event)
+    foreach ($this->eventsRelatedByobjectId as $event)
     {
       if (isset($event->actor))
       {
@@ -1498,7 +1480,7 @@ class QubitInformationObject extends BaseInformationObject
    * To find existing actors associated with the information object, we check:
    * 1. Actors associated with this information object by an existing event
    * 2. Actors associated with this information object by relation (either subject or object)
-   * 3. Actors associated with other information objects in this repository
+   * 3. Actors that have the same name
    *
    * @param $name  The name of the actor
    * @param $options  An array of options filling in the new event or name access point info.
@@ -1530,16 +1512,10 @@ class QubitInformationObject extends BaseInformationObject
       $actor = $this->getActorByNameAndRelation($name, 'object');
     }
 
-    // Check relations with other descriptions in the repository
+    // Lastly, check just if there are any other actors with this exact name
     if (!$actor)
     {
-      $repoId = null;
-      if (null !== $repo = $this->getRepository(array('inherit' => true)))
-      {
-        $repoId = $repo->id;
-      }
-
-      $actor = QubitActor::getByNameAndRepositoryId($name, $repoId);
+      $actor = QubitActor::getByAuthorizedFormOfName($name);
     }
 
     // If there isn't a match create a new actor
@@ -1597,7 +1573,7 @@ class QubitInformationObject extends BaseInformationObject
         $event->setDescription($options['event_note']);
       }
 
-      $this->events[] = $event;
+      $this->eventsRelatedByobjectId[] = $event;
     }
     // In EAD import, the term relation is not always created at this point;
     // it might be created afterwards.
@@ -1825,7 +1801,7 @@ class QubitInformationObject extends BaseInformationObject
 
     // Obtain creators (we can't use criteria because they're not saved yet)
     $creators = array();
-    foreach ($this->events as $existingEvent)
+    foreach ($this->eventsRelatedByobjectId as $existingEvent)
     {
       if ($existingEvent->typeId == QubitTerm::CREATION_ID && isset($existingEvent->actor))
       {
@@ -1857,7 +1833,7 @@ class QubitInformationObject extends BaseInformationObject
         $event->setActorId($actor->id);
         $event->setTypeId(QubitTerm::CREATION_ID);
 
-        $this->events[] = $event;
+        $this->eventsRelatedByobjectId[] = $event;
       }
       else if (!isset($creators[$key]->history))
       {
@@ -1995,7 +1971,7 @@ class QubitInformationObject extends BaseInformationObject
   {
     // Check events array for related events/actors (we may not have saved this
     // data to the database yet)
-    if (0 < count($relatedEvents = $this->events))
+    if (0 < count($relatedEvents = $this->eventsRelatedByobjectId))
     {
       foreach ($relatedEvents as $event)
       {
@@ -2200,7 +2176,7 @@ class QubitInformationObject extends BaseInformationObject
     $event->setEndDate($normalizedDate['end']);
     $event->setDate($date);
 
-    $this->events[] = $event;
+    $this->eventsRelatedByobjectId[] = $event;
 
     return $event;
   }
@@ -2527,17 +2503,17 @@ class QubitInformationObject extends BaseInformationObject
     // Find first child visible
     $criteria = new Criteria;
     $criteria->add(QubitInformationObject::PARENT_ID, $this->id);
-    $criteria = QubitInformationObject::addTreeViewSortCriteria($criteria);
-    foreach (QubitInformationObject::get($criteria) as $item)
-    {
-      // ACL checks
-      if (QubitAcl::check($item, 'read'))
-      {
-        $firstChild = $item;
 
-        break;
-      }
+    // If not authenticated, restrict access to published descriptions
+    if (!sfContext::getInstance()->user->isAuthenticated())
+    {
+      $criteria->addJoin(QubitInformationObject::ID, QubitStatus::OBJECT_ID);
+      $criteria->add(QubitStatus::STATUS_ID, QubitTerm::PUBLICATION_STATUS_PUBLISHED_ID);
     }
+
+    $criteria = QubitInformationObject::addTreeViewSortCriteria($criteria);
+
+    $firstChild = QubitInformationObject::getOne($criteria);
 
     $items = array();
     if (isset($firstChild))
@@ -2686,31 +2662,30 @@ class QubitInformationObject extends BaseInformationObject
           }
       }
 
+      // If not authenticated, restrict access to published descriptions
+      if (!sfContext::getInstance()->user->isAuthenticated())
+      {
+        $criteria->addJoin(QubitInformationObject::ID, QubitStatus::OBJECT_ID);
+        $criteria->add(QubitStatus::STATUS_ID, QubitTerm::PUBLICATION_STATUS_PUBLISHED_ID);
+      }
+
       // This is the number of items we were asked for.
       $rows = QubitInformationObject::get($criteria);
-      $items = array();
 
-      // Transfer the results into an array. We enforce the limit this way as opposed to
-      // setLimit() because we need the 'total count' of siblings in $row->count(),
-      // not just a limited count. Doing it this way doesn't appear to significantly impact
-      // performance.
-      $i = 0;
-      foreach ($rows as $item)
-      {
-        $items[] = $item;
-        if (++$n == $limit)
-        {
-          break;
-        }
-      }
+      // Take note of row count before we do a limited version of the query
+      $rowsCount = $rows->count();
+
+      // Perform limited version of query
+      $criteria->setLimit($limit);
+      $rows = QubitInformationObject::get($criteria);
 
       if ($siblingsRemaining !== null)
       {
-        $siblingsRemaining = $rows->count() - $limit + 1;
+        $siblingsRemaining = $rowsCount - $limit + 1;
       }
 
       // Iterate over results and store them in the $results array
-      foreach ($items as $item)
+      foreach ($rows as $item)
       {
         // Avoid to add the same element, this may happen when sorting by title
         // or identifierTitle for unknown reasons
@@ -2721,12 +2696,6 @@ class QubitInformationObject extends BaseInformationObject
 
         // We will need this later to control the loop
         $last = $item;
-
-        // ACL checks
-        if (!QubitAcl::check($item, 'read'))
-        {
-          continue;
-        }
 
         // Add item to array
         $results[] = $item;

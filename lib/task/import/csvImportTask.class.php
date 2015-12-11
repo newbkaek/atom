@@ -317,7 +317,7 @@ EOF;
           'typeId' => array_search('Conservation', $termData['radNoteTypes'])
         ),
         'radNoteGeneral' => array(
-          'typeId' => array_search('General note', $termData['radNoteTypes'])
+          'typeId' => array_search('General note', $termData['noteTypes'])
         ),
         'radNotePhysicalDescription' => array(
           'typeId' => array_search('Physical description', $termData['radNoteTypes'])
@@ -1021,10 +1021,10 @@ EOF;
         }
 
         // add ad-hoc events
-        parent::importEvents($self);
+        csvImportBaseTask::importEvents($self);
 
         // add creation events
-        parent::importCreationEvents($self);
+        csvImportBaseTask::importCreationEvents($self);
 
         // This will import only a single digital object;
         // if both a URI and path are provided, the former is preferred.

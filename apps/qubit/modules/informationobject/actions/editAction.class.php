@@ -531,7 +531,7 @@ class InformationObjectEditAction extends DefaultEditAction
 
       if ('sfIsadPlugin' != $this->request->module)
       {
-        foreach ($sourceInformationObject->events as $sourceEvent)
+        foreach ($sourceInformationObject->eventsRelatedByobjectId as $sourceEvent)
         {
           if (false === array_search($this->context->routing->generate(null, array($sourceEvent, 'module' => 'event')), (array)$this->request->deleteEvents))
           {
@@ -572,7 +572,7 @@ class InformationObjectEditAction extends DefaultEditAction
               $event->objectTermRelationsRelatedByobjectId[] = $termRelation;
             }
 
-            $this->resource->events[] = $event;
+            $this->resource->eventsRelatedByobjectId[] = $event;
           }
         }
       }
@@ -665,14 +665,11 @@ class InformationObjectEditAction extends DefaultEditAction
 
     foreach ($updateChildLevels as $item)
     {
+      // Notice that the publication status is established
+      // later in the updateStatus function
       $childLevel = new QubitInformationObject;
       $childLevel->identifier = $item['identifier'];
       $childLevel->title = $item['title'];
-
-      if (null != ($pubStatus = $this->resource->getPublicationStatus()))
-      {
-        $childLevel->setPublicationStatus($pubStatus->statusId);
-      }
 
       if (0 < strlen($item['levelOfDescription']) && (null !== QubitTerm::getById($item['levelOfDescription'])))
       {
@@ -714,7 +711,7 @@ class InformationObjectEditAction extends DefaultEditAction
           }
         }
 
-        $childLevel->events[] = $creationEvent;
+        $childLevel->eventsRelatedByobjectId[] = $creationEvent;
       }
 
       if (0 < strlen($item['levelOfDescription'])
