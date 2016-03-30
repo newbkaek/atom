@@ -552,7 +552,7 @@ if (!defined('AR_AUTO_LINK_RE'))
       [-\w@]+                                       # subdomain or domain
       (?:\.[-\w@]+)*                                # remaining subdomains or domain
       (?::\d+)?                                     # port
-      (?:/(?:(?:[\~\w\+%-]|(?:[,.;:][^\s$]))+)?)*   # path
+      (?:/(?:(?:[\~\w\+=%-]|(?:[,.;:][^\s$]))+)?)*  # path
       (?:\?[\w\+\/%&=.;-]+)?                        # query string
       (?:\#[\w\-/\?!=]*)?                           # trailing anchor
     )
