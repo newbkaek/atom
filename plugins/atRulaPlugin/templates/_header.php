@@ -119,7 +119,7 @@
 		<div class="row">
 			<div class="span6 logo">
 				<?php if (sfConfig::get('app_toggleLogo')): ?>
-					<?php echo link_to(image_tag('/plugins/atRulaPlugin/images/logo.png'), '@homepage', array('id' => 'logo', 'rel' => 'home')) ?>
+					<?php echo link_to(image_tag('/plugins/atRulaPlugin/images/logo.png'), 'http://library.ryerson.ca', array('id' => 'logo', 'rel' => 'home')) ?>
 				<?php endif; ?>
 
 				<?php if (sfConfig::get('app_toggleTitle')): ?>
