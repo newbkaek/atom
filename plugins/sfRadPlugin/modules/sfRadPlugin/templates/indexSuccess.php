@@ -280,6 +280,14 @@
     <?php echo get_partial('informationobject/alternativeIdentifiersIndex', array('resource' => $resource)) ?>
   </div>
 
+  <?php /* Hackyhacky hack to hack archivist notes field from ISAD(G) template into RAD template :) */ ?>
+  <?php if ($sf_user->isAuthenticated()): ?>
+    <?php if (check_field_visibility('app_element_visibility_isad_control_archivists_notes')): ?>
+      <?php foreach ($resource->getNotesByType(array('noteTypeId' => QubitTerm::ARCHIVIST_NOTE_ID)) as $item): ?>
+        <?php echo render_show(__('Archivist\'s note'), render_value($item->getContent(array('cultureFallback' => true)))) ?>
+      <?php endforeach; ?>
+    <?php endif; ?>
+  <?php endif; ?>
 </section> <!-- /section#notesArea -->
 
 <section id="standardNumberArea">

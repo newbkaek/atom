@@ -128,6 +128,11 @@ class sfRadPluginEditAction extends InformationObjectEditAction
     $this->otherNotesComponent = new InformationObjectNotesComponent($this->context, 'informationobject', 'notes');
     $this->otherNotesComponent->resource = $this->resource;
     $this->otherNotesComponent->execute($this->request, $options = array('type' => 'radOtherNotes'));
+
+    /* Hackyhacky hack to hack archivist notes field from ISAD(G) template into RAD template :) */
+    $this->archivistsNotesComponent = new InformationObjectNotesComponent($this->context, 'informationobject', 'notes');
+    $this->archivistsNotesComponent->resource = $this->resource;
+    $this->archivistsNotesComponent->execute($this->request, $options = array('type' => 'isadArchivistsNotes'));
   }
 
   protected function addField($name)
@@ -275,6 +280,9 @@ class sfRadPluginEditAction extends InformationObjectEditAction
     $this->notesComponent->processForm();
 
     $this->otherNotesComponent->processForm();
+
+    /* Hackyhacky hack to hack archivist notes field from ISAD(G) template into RAD template :) */
+    $this->archivistsNotesComponent->processForm();
 
     return parent::processForm();
   }
