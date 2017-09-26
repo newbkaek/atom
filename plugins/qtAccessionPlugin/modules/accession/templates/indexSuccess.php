@@ -140,10 +140,13 @@
 
   <?php foreach (QubitRelation::getRelationsByObjectId($resource->id, array('typeId' => QubitTerm::ACCESSION_ID)) as $item): ?>
 
+    <?php // Hackyhacky hack to hack in InformationObject reference code into accessions view. ?>
+    <?php $identifier = QubitInformationObject::getById( $item->subjectId )->__get('identifier'); ?>
+
     <div class="field">
       <h3><?php echo sfConfig::get('app_ui_label_informationobject') ?></h3>
       <div>
-        <?php echo link_to(esc_specialchars(render_title($item->subject)), array($item->subject, 'module' => 'informationobject')) ?>
+        <?php echo link_to( "{$identifier} - " . esc_specialchars(render_title($item->subject)), array($item->subject, 'module' => 'informationobject')) ?>
       </div>
     </div>
 
