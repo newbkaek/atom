@@ -268,7 +268,7 @@ propel:
     name: varchar(1024)
 
   property_i18n:
-    value: longvarchar
+    value: longtext
 
   relation:
     id: { type: integer, required: true, primaryKey: true, foreignTable: object, foreignReference: id, onDelete: cascade, inheritanceKey: true }
