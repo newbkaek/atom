@@ -2994,20 +2994,20 @@ class QubitDigitalObject extends BaseDigitalObject
    * @return boolean true if extraction is supported
    */
   public static function canExtractText($mimeType)
-  {
-    // Only works for PDFs
-    if ('application/pdf' != $mimeType)
+  { 
+    // Works for PDFs but requires pdftotext binary
+    if ('application/pdf' == $mimeType && self::hasPdfToText() )
     {
-      return false;
+      return true;
     }
 
-    // Requires pdftotext binary
-    if (!self::hasPdfToText())
+    // Works for CSVs
+    if ('text/csv' == $mimeType)
     {
-      return false;
+      return true;
     }
 
-    return true;
+    return false;
   }
 
   /**
