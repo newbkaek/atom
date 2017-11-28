@@ -3050,25 +3050,39 @@ class QubitDigitalObject extends BaseDigitalObject
       return;
     }
 
-    $command = sprintf('pdftotext %s - 2> /dev/null', $path);
-    exec($command, $output, $status);
+    $text = "";
+    $scope = "";
 
-    if (0 == $status && 0 < count($output))
+    switch($this->mimeType) {
+      case 'application/pdf':
+        $command = sprintf('pdftotext %s - 2> /dev/null', $path);
+        exec($command, $output, $status);
+        if ($status == 0) {
+          $text = implode(PHP_EOL, $output);
+          $scope = "Text extracted from source PDF file\'s text layer using pdftotext";
+        }
+        break;
+      case 'text/csv':
+        $text = file_get_contents($path);
+        $scope = "Text extracted from source CSV file";
+        break;
+      default:
+        return;
+    }
+
+    if ( 0 < count($text) )
     {
-      $text = implode(PHP_EOL, $output);
-
       // Update or create 'transcript' property
       $criteria = new Criteria;
       $criteria->add(QubitProperty::OBJECT_ID, $this->id);
       $criteria->add(QubitProperty::NAME, 'transcript');
-      $criteria->add(QubitProperty::SCOPE, 'Text extracted from source PDF file\'s text layer using pdftotext');
 
       if (null === $property = QubitProperty::getOne($criteria))
       {
         $property = new QubitProperty;
         $property->objectId = $this->id;
         $property->name = 'transcript';
-        $property->scope = 'Text extracted from source PDF file\'s text layer using pdftotext';
+        $property->scope = $scope;
       }
 
       $property->value = $text;
