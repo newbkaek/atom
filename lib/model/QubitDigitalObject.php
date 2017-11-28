@@ -2035,6 +2035,11 @@ class QubitDigitalObject extends BaseDigitalObject
           {
             $this->createThumbnail($connection);
           }
+        } else {
+          if ($usageId == QubitTerm::EXTERNAL_URI_ID || $usageId == QubitTerm::MASTER_ID) 
+          {
+            $this->extractText($connection);
+          }
         }
 
         break;
