@@ -236,8 +236,6 @@ class sfDcPlugin implements ArrayAccess
 
   public static function eventTypes()
   {
-    return array(QubitTerm::getById(QubitTerm::CONTRIBUTION_ID),
-      QubitTerm::getById(QubitTerm::CREATION_ID),
-      QubitTerm::getById(QubitTerm::PUBLICATION_ID));
+    return QubitTaxonomy::getTermsById(QubitTaxonomy::EVENT_TYPE_ID);
   }
 }
