@@ -110,17 +110,17 @@
 
         </section>
 
-        <?php echo render_field($form->extentAndMedium
+        <?php /* echo render_field($form->extentAndMedium
           ->help(__('<p>The file format, physical medium, or dimensions of the resource.</p><p>Please note: if this resource is linked to a digital object, the Internet Media Types (MIME) will be added automatically upon output, so don\'t duplicate those values here.</p>'))
-          ->label(__('Format')), $resource, array('class' => 'resizable')) ?>
+          ->label(__('Format')), $resource, array('class' => 'resizable'))  */ ?>
 
-        <?php echo render_field($form->locationOfOriginals
+        <?php /*  echo render_field($form->locationOfOriginals
           ->help(__('Related material(s) from which this resource is derived.'))
-          ->label(__('Source')), $resource, array('class' => 'resizable')) ?>
+          ->label(__('Source')), $resource, array('class' => 'resizable')) */ ?>
 
-        <?php echo $form->language
+        <?php /*  echo $form->language
           ->help(__('Language(s) of this resource.'))
-          ->renderRow(array('class' => 'form-autocomplete')) ?>
+          ->renderRow(array('class' => 'form-autocomplete')) */ ?>
 
         <div class="form-item">
           <?php echo $form->repository
@@ -134,6 +134,7 @@
             ->renderHelp() ?>
         </div>
 
+        <?php /*
         <div class="form-item">
           <?php echo $form->placeAccessPoints
             ->label(__('Coverage (spatial)'))
@@ -147,6 +148,7 @@
             ->help(__('<p>The name of a place or geographic area which is a topic of the resource or relevant to its jurisdiction.</p><p>Search for an existing term in the Place taxonomy by typing the first few characters of the place name. Alternatively, type a new name to create and link to a new place.</p><p>Please note: if you entered a place of creation, publication or contribution that will be output automatically, so don’t repeat that place name here.</p>'))
             ->renderHelp() ?>
         </div>
+        */ ?>
 
         <?php echo render_field($form->accessConditions
           ->help(__('Information about rights held in and over the resource (e.g. copyright, access conditions, etc.).'))
