@@ -94,7 +94,7 @@
   <?php echo get_partial('informationobject/dates', array('resource' => $resource)) ?>
 
   <?php foreach ($resource->getSubjectAccessPoints() as $item): ?>
-    <?php echo render_show(__('Subject'), link_to($item->term, array($item->term, 'module' => 'term'))) ?>
+    <?php echo render_show(__(sfConfig::get('app_ui_label_subject')), link_to($item->term, array($item->term, 'module' => 'term'))) ?>
   <?php endforeach; ?>
 
   <?php echo render_show(__('Description'), render_value($resource->getScopeAndContent(array('cultureFallback' => true)))) ?>

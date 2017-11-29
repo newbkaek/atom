@@ -60,7 +60,7 @@
 
         <div class="form-item">
           <?php echo $form->subjectAccessPoints
-            ->label(__('Subject'))
+            ->label(__(sfConfig::get('app_ui_label_subject')))
             ->renderLabel() ?>
           <?php echo $form->subjectAccessPoints->render(array('class' => 'form-autocomplete')) ?>
           <?php if (QubitAcl::check(QubitTaxonomy::getById(QubitTaxonomy::SUBJECT_ID), 'createTerm')): ?>
