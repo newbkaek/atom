@@ -91,6 +91,8 @@
     </div>
   <?php endforeach; ?>
 
+  <?php echo get_partial('informationobject/nameAccessPoints', array('resource' => $resource)) ?>
+
   <?php echo get_partial('informationobject/dates', array('resource' => $resource)) ?>
 
   <?php foreach ($resource->getSubjectAccessPoints() as $item): ?>
