@@ -124,6 +124,7 @@
           ->help(__('Language(s) of this resource.'))
           ->renderRow(array('class' => 'form-autocomplete')) */ ?>
 
+        <?php /*
         <div class="form-item">
           <?php echo $form->repository
             ->label(__('Relation (isLocatedAt)').' <span class="form-required" title="'.__('This is a mandatory element for this resource or one of its higher descriptive levels (if part of a collection hierarchy).').'">*</span>')
@@ -135,6 +136,7 @@
             ->help(__('<p>The name of the organization which has custody of the resource.</p><p>Search for an existing name in the organization records by typing the first few characters of the name. Alternatively, type a new name to create and link to a new organization record.</p>'))
             ->renderHelp() ?>
         </div>
+        */ ?>
 
         <?php /*
         <div class="form-item">

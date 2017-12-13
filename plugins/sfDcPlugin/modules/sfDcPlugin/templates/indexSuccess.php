@@ -115,7 +115,7 @@
     <?php echo render_show(__('Language'), format_language($code)) ?>
   <?php endforeach; ?>
 
-  <?php echo render_show_repository(__('Relation (isLocatedAt)'), $resource) ?>
+  <?php /* echo render_show_repository(__('Relation (isLocatedAt)'), $resource)*/ ?>
 
   <?php foreach ($dc->coverage as $item): ?>
     <?php echo render_show(__('Coverage (spatial)'), link_to(render_title($item), array($item, 'module' => 'term'))) ?>
