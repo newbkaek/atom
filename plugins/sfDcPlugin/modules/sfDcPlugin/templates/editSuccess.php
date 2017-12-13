@@ -80,6 +80,7 @@
           ->help(__('<p>The nature or genre of the resource.</p><p>Assign as many types as applicable. The <em>Type</em> options are limited to the DCMI Type vocabulary.</p><p>Assign the <em>Collection</em> value if this resource is the top-level for a set of lower-level (child) resources.</p><p>Please note: if this resource is linked to a digital object, the <em>image</em>, <em>text</em>, <em>sound</em> or <em>moving image</em> types are added automatically upon output, so do not duplicate those values here.</p>'))
           ->renderRow() ?>
 
+        <?php /*
         <section>
 
           <h3><?php echo __('Child levels (if describing a collection)') ?></h3>
@@ -109,6 +110,7 @@
           </div>
 
         </section>
+        */ ?>
 
         <?php /* echo render_field($form->extentAndMedium
           ->help(__('<p>The file format, physical medium, or dimensions of the resource.</p><p>Please note: if this resource is linked to a digital object, the Internet Media Types (MIME) will be added automatically upon output, so don\'t duplicate those values here.</p>'))
