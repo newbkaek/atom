@@ -32,7 +32,7 @@
 
   <?php echo get_partial('informationobject/subjectAccessPoints', array('resource' => $resource, 'sidebar' => true)) ?>
 
-  <?php echo get_partial('informationobject/nameAccessPoints', array('resource' => $resource, 'sidebar' => true)) ?>
+  <?php /* echo get_partial('informationobject/nameAccessPoints', array('resource' => $resource, 'sidebar' => true)) */ ?>
 
   <?php echo get_partial('informationobject/placeAccessPoints', array('resource' => $resource, 'sidebar' => true)) ?>
 
