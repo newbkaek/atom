@@ -60,6 +60,7 @@
 
   <?php echo render_show(__('Title'), render_value($resource->getTitle(array('cultureFallback' => true)))) ?>
 
+  <?php /* 
   <?php $actorsShown = array(); ?>
   <?php  foreach ($resource->getCreators() as $item): ?>
     <?php if (!isset($actorsShown[$item->id])): ?>
@@ -90,6 +91,7 @@
       </div>
     </div>
   <?php endforeach; ?>
+  */ ?>
 
   <?php echo get_partial('informationobject/nameAccessPoints', array('resource' => $resource)) ?>
 
