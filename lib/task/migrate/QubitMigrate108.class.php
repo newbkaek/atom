@@ -1249,7 +1249,7 @@ class QubitMigrate108 extends QubitMigrate
       'source_culture' => 'en',
       'name' => 'browseSubjects',
       'label' => array(
-        'en' => 'Subjects'
+        'en' => 'Resources'
       ),
       'path' => 'term/browseTaxonomy?id=<?php echo QubitTaxonomy::SUBJECT_ID ?>'
     );
