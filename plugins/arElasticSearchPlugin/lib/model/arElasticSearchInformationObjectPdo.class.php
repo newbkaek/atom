@@ -1195,6 +1195,18 @@ class arElasticSearchInformationObjectPdo
       $serialized['directSubjects'][] = $item->id;
     }
 
+    // Types
+    foreach ($this->getRelatedTerms(QubitTaxonomy::DC_TYPE_ID) as $item)
+    {
+      $node = new arElasticSearchTermPdo($item->id);
+      $serialized['types'][] = $node->serialize();
+    }
+
+    foreach ($this->getDirectlyRelatedTerms(QubitTaxonomy::DC_TYPE_ID) as $item)
+    {
+      $serialized['directTypes'][] = $item->id;
+    }
+
     // Name access points
     foreach ($this->getNameAccessPoints() as $item)
     {
