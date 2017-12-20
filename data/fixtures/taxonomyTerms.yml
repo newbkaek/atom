@@ -146,7 +146,7 @@ QubitTaxonomy:
       de: Themen
       de-CH: Themen
       el: Θέματα
-      en: Subjects
+      en: Resources
       es: Materias
       eu: Gaiak
       fr: Sujets
@@ -5529,7 +5529,7 @@ QubitTerm:
       de: Gegenstand
       de-CH: Gegenstand
       el: Θέμα
-      en: Subject
+      en: Resource
       es: Materia
       eu: Gaia
       fr: Sujet

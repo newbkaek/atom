@@ -426,6 +426,7 @@ mapping:
       names: actor
       creators: actor
       subjects: term
+      types: term
       places: term
       genres: term
       dates: event
@@ -455,6 +456,7 @@ mapping:
       material_type_id: { type: integer, index: not_analyzed, include_in_all: false }
       transcript: { type: string, index: analyzed, include_in_all: true }
       direct_subjects: { type: integer, index: not_analyzed, include_in_all: false }
+      direct_types: { type: integer, index: not_analyzed, include_in_all: false }
       direct_places: { type: integer, index: not_analyzed, include_in_all: false }
       direct_genres: { type: integer, index: not_analyzed, include_in_all: false }
       has_digital_object: { type: boolean, index: not_analyzed, include_in_all: false }
