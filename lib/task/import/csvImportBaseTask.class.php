@@ -223,8 +223,10 @@ abstract class csvImportBaseTask extends arBaseTask
     {
       if (!isset($eventData['type']))
       {
-        // Creation is the default event type
-        $eventTypeId = QubitTerm::CREATION_ID;
+        // Creation is the default event type. Cast variable as string to avoid
+        // a type mismatch when testing if it's a duplicate event in
+        // QubitFlatfileImport::hasDuplicateEvent()
+        $eventTypeId = (string) QubitTerm::CREATION_ID;
       }
       else
       {
@@ -235,10 +237,53 @@ abstract class csvImportBaseTask extends arBaseTask
         unset($eventData['type']);
       }
 
+      // If in update mode, check if the import event data matches an existing
+      // event
+      if ($import->matchAndUpdate &&
+        null !== $event = self::matchExistingEvent($import->object->id, $eventTypeId, $eventData['actorName']))
+      {
+        $eventData['eventId'] = $event->id;
+      }
+
       // Add row culture to fetch place term in event creation/update
       $eventData['culture'] = $import->columnValue('culture');
 
       $import->createOrUpdateEvent($eventTypeId, $eventData);
+    }
+  }
+
+  static function matchExistingEvent($objectId, $typeId, $actorName)
+  {
+    // Check for a matching event to update
+    $criteria = new Criteria;
+    $criteria->add(QubitEvent::TYPE_ID, $typeId);
+    $criteria->add(QubitEvent::OBJECT_ID, $objectId);
+
+    // Search for a related event linked to the provided actor name
+    if (!isset($actorName))
+    {
+      // If no actor name is provided, check for a related event with no actor
+      $criteria->add(QubitEvent::ACTOR_ID, null, Criteria::ISNULL);
+    }
+    else
+    {
+      if (null !== $actor = QubitActor::getByAuthorizedFormOfName($actorName))
+      {
+        // If we found a matching actor, then check for an event related to
+        // that actor
+        $criteria->add(QubitEvent::ACTOR_ID, $actor->id);
+      }
+      else
+      {
+        // The provided actor name doesn't exist, so create a new event
+        return;
+      }
+    }
+
+    // Return the matching event, if one is found
+    if (null !== $event = QubitEvent::getOne($criteria))
+    {
+      return $event;
     }
   }
 }

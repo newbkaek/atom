@@ -26,9 +26,21 @@ class QubitAccession extends BaseAccession
 
   protected function insert($connection = null)
   {
-    if (!$this->identifier)
+    // If identifier has been specified and the mask is enabled, increment the counter
+    if (!empty($this->identifier) && self::maskEnabled())
     {
-      $this->identifier = self::generateAccessionIdentifier(true);
+      $con = Propel::getConnection();
+      try
+      {
+        $con->beginTransaction();
+        self::incrementAccessionCounter();
+        $con->commit();
+      }
+      catch (PropelException $e)
+      {
+        $con->rollback();
+        throw $e;
+      }
     }
 
     if (!isset($this->slug))
@@ -80,62 +92,53 @@ class QubitAccession extends BaseAccession
     return 0 < count(QubitRelation::get($criteria));
   }
 
-  public static function getAccessionNumber($incrementCounter)
+  public static function maskEnabled()
   {
-    if ($incrementCounter)
-    {
-      $con = Propel::getConnection();
-      try
-      {
-        $con->beginTransaction();
-
-        $setting = QubitSetting::getByName('accession_counter');
-        $value = $setting->getValue(array('sourceCulture' => true)) + 1;
-        $setting->setValue($value, array('sourceCulture' => true));
-        $setting->save();
-
-        $con->commit();
-      }
-      catch (PropelException $e)
-      {
-        $con->rollback();
-
-        throw $e;
-      }
-    }
-    else
-    {
-      $setting = QubitSetting::getByName('accession_counter');
-      $value = $setting->getValue(array('sourceCulture' => true)) + 1;
-    }
-
-    return $value;
+    $setting = QubitSetting::getByName('accession_mask_enabled');
+    return (null === $setting || boolval($setting->getValue(array('sourceCulture' => true))));
   }
 
-  public static function generateAccessionIdentifier($incrementCounter = false)
+  public static function nextAccessionNumber()
   {
-    return preg_replace_callback('/([#%])([A-z]+)/', function($match) use ($incrementCounter)
-    {
-      if ('%' == $match[1])
-      {
-        return strftime('%'.$match[2]);
-      }
-      else if ('#' == $match[1])
-      {
-        if (0 < preg_match('/^i+$/', $match[2], $matches))
-        {
-          $pad = strlen($matches[0]);
-          $number = QubitAccession::getAccessionNumber($incrementCounter);
+    $setting = QubitSetting::getByName('accession_counter');
+    return $setting->getValue(array('sourceCulture' => true)) + 1;
+  }
 
-          return str_pad($number, $pad, 0, STR_PAD_LEFT);
-          // return sprintf('%0' . $pad . 'd', $number);
-        }
-        else
-        {
-          return $match[2];
-        }
+  public static function incrementAccessionCounter()
+  {
+    $setting = QubitSetting::getByName('accession_counter');
+    $value = $setting->getValue(array('sourceCulture' => true)) + 1;
+    $setting->setValue($value, array('sourceCulture' => true));
+    $setting->save();
+  }
+
+  public static function nextAvailableIdentifier()
+  {
+    $con = Propel::getConnection();
+    try
+    {
+      $con->beginTransaction();
+
+      // Determine what should be the next identifier
+      $identifier = Qubit::generateIdentifierFromCounterAndMask(self::nextAccessionNumber(), sfConfig::get('app_accession_mask'));
+
+      // If this identifier has already been used, increment counter and try again
+      if (!QubitValidatorAccessionIdentifier::identifierCanBeUsed($identifier))
+      {
+        self::incrementAccessionCounter();
+        $identifier = self::nextAvailableIdentifier();
       }
-    }, sfConfig::get('app_accession_mask'));
+
+      $con->commit();
+
+      return $identifier;
+    }
+    catch (PropelException $e)
+    {
+      $con->rollback();
+
+      throw $e;
+    }
   }
 
   /**

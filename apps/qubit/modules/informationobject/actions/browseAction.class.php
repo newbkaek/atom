@@ -309,18 +309,25 @@ class InformationObjectBrowseAction extends DefaultBrowseAction
 
   protected function setHiddenFields($request)
   {
-    // Store current params (facets, sort, etc) to add them as hidden inputs
-    // in the form, to keep the selected facets and all on submit
+    // Store current params to add them as hidden inputs
+    // in the form, to keep GET and POST params in sync
     $this->hiddenFields = array();
     foreach ($request->getGetParameters() as $key => $value)
     {
-      // Ignore:
-      // - Params that exists in the form
-      // - Criteria fields
-      // - 'query' param (added to the criteria)
-      // - 'showAdvanced' param (always added)
-      if (in_array($key, $this::$NAMES) || 1 === preg_match('/^(sq|sf|so)\d+$/', $key)
-        || in_array($key, array('query', 'showAdvanced')))
+      // Keep control of what is added to avoid
+      // Cross-Site Scripting vulnerability. Only allow:
+      // - Facets
+      // - Sort, view and media options
+      // - actorId, eventTypeId and ancestor params
+      // But ignore facets already included in the form:
+      // - repos, collection and levels
+      $allowed = array_merge(
+        array_keys($this::$FACETS),
+        array('view', 'sort', 'media'),
+        array('actorId', 'eventTypeId', 'ancestor')
+      );
+      $ignored = array('repos', 'collection', 'levels');
+      if (!in_array($key, $allowed) || in_array($key, $ignored))
       {
         continue;
       }
@@ -337,10 +344,12 @@ class InformationObjectBrowseAction extends DefaultBrowseAction
       $this->repos = QubitRepository::getById($request->repos);
 
       // Add repo to the user session as realm
-      $this->context->user->setAttribute('search-realm', $request->repos);
+      if (sfConfig::get('app_enable_institutional_scoping'))
+      {
+        $this->context->user->setAttribute('search-realm', $request->repos);
+      }
     }
-    else if (sfConfig::get('app_enable_institutional_scoping') &&
-      !(isset($request->collection) && ctype_digit($request->collection)))
+    else if (sfConfig::get('app_enable_institutional_scoping'))
     {
       // Remove realm
       $this->context->user->removeAttribute('search-realm');
@@ -422,6 +431,11 @@ class InformationObjectBrowseAction extends DefaultBrowseAction
 
           break;
       }
+    }
+
+    if (isset($request->ancestor) && ctype_digit($request->ancestor))
+    {
+      $this->ancestor = QubitInformationObject::getById($request->ancestor);
     }
   }
 

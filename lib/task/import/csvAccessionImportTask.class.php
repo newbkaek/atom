@@ -30,7 +30,7 @@ class csvAccessionImportTask extends csvImportBaseTask
   protected $name                = 'accession-import';
   protected $briefDescription    = 'Import csv acession data';
   protected $detailedDescription = <<<EOF
-Import CSV data
+Import CSV accession data
 EOF;
 
   /**
@@ -51,6 +51,12 @@ EOF;
         null,
         sfCommandOption::PARAMETER_NONE,
         "Index for search during import."
+      ),
+      new sfCommandOption(
+        'assign-id',
+        null,
+        sfCommandOption::PARAMETER_NONE,
+        "Assign identifier, based on mask and counter, if no accession number specified in row."
       )
     ));
   }
@@ -60,6 +66,8 @@ EOF;
    */
   public function execute($arguments = array(), $options = array())
   {
+    parent::execute($arguments, $options);
+
     $this->validateOptions($options);
 
     $skipRows = ($options['skip-rows']) ? $options['skip-rows'] : 0;
@@ -102,7 +110,8 @@ EOF;
         'acquisitionTypes'   => $termData['acquisitionTypes'],
         'resourceTypes'      => $termData['resourceTypes'],
         'processingStatus'   => $termData['processingStatus'],
-        'processingPriority' => $termData['processingPriority']
+        'processingPriority' => $termData['processingPriority'],
+        'assignId'           => $options['assign-id']
       ),
 
       'standardColumns' => array(
@@ -192,23 +201,33 @@ EOF;
         $result = $statement->fetch(PDO::FETCH_OBJ);
         if ($result)
         {
-          print 'Found '. $result->id ."\n";
+          print $self->logError(sprintf('Found accession ID %d', $result->id));
           $self->object = QubitAccession::getById($result->id);
+        }
+        else if (!empty($accessionNumber))
+        {
+          print $self->logError(sprintf('Could not find accession # %s, creating.', $accessionNumber));
+          $self->object = new QubitAccession();
+          $self->object->identifier = $accessionNumber;
+        }
+        else if ($self->getStatus('assignId'))
+        {
+          $identifier = QubitAccession::nextAvailableIdentifier();
+          print $self->logError(sprintf('No accession number, creating accession with identifier %s', $identifier));
+          $self->object = new QubitAccession();
+          $self->object->identifier = $identifier;
         }
         else
         {
-          $self->object = false;
-          $error = "Couldn't find accession # ". $accessionNumber .'... creating.';
-          print $error ."\n";
-          $self->object = new QubitAccession();
-          $self->object->identifier = $accessionNumber;
+          print $self->logError('No accession number, skipping');
         }
       },
 
       // Import logic to save accession
       'saveLogic' => function(&$self)
       {
-        if(isset($self->object) && is_object($self->object))
+        // If row was skipped due to not having an accession number, don't attempt to save
+        if (isset($self->object) && $self->object instanceof QubitAccession)
         {
           $self->object->save();
         }
@@ -217,7 +236,8 @@ EOF;
       // Create related objects
       'postSaveLogic' => function(&$self)
       {
-        if(isset($self->object) && is_object($self->object))
+        // If row was skipped due to not having an accession number, don't create related objects
+        if (isset($self->object) && $self->object instanceof QubitAccession && isset($self->object->id))
         {
           // Add creators
           if (isset($self->rowStatusVars['creators'])
@@ -265,7 +285,15 @@ EOF;
             // Attempt to coerce country to country code if value specified (and not already a country code)
             if (!empty($self->rowStatusVars['donorCountry']))
             {
-              $contactData['countryCode'] = $this->parseCountryOrCountryCodeOrFail($self->rowStatusVars['donorCountry']);
+              $countryCode = QubitFlatfileImport::normalizeCountryAsCountryCode($self->rowStatusVars['donorCountry']);
+              if ($countryCode === null)
+              {
+                print sprintf("Could not find country or country code matching '%s'\n", $self->rowStatusVars['donorCountry']);
+              }
+              else
+              {
+                $contactData['countryCode'] = $countryCode;
+              }
             }
 
             // Create contact information if none exists
@@ -295,22 +323,26 @@ EOF;
       }
     ));
 
-    $import->addColumnHandler('acquisitionDate', function(&$self, $data)
+    $import->addColumnHandler('acquisitionDate', function($self, $data)
     {
       if ($data)
       {
         if (isset($self->object) && is_object($self->object))
         {
-          $parsedDate = $self->parseDateLoggingErrors($data);
+          $parsedDate = Qubit::parseDate($data);
           if ($parsedDate)
           {
             $self->object->date = $parsedDate;
+          }
+          else
+          {
+            $self->logError('Could not parse date: ' . $data);
           }
         }
       }
     });
 
-    $import->addColumnHandler('resourceType', function(&$self, $data)
+    $import->addColumnHandler('resourceType', function($self, $data)
     {
       setObjectPropertyToTermIdLookedUpFromTermNameArray(
         $self,
@@ -321,7 +353,7 @@ EOF;
       );
     });
 
-    $import->addColumnHandler('acquisitionType', function(&$self, $data)
+    $import->addColumnHandler('acquisitionType', function($self, $data)
     {
       setObjectPropertyToTermIdLookedUpFromTermNameArray(
         $self,
@@ -332,7 +364,7 @@ EOF;
       );
     });
 
-    $import->addColumnHandler('processingStatus', function(&$self, $data)
+    $import->addColumnHandler('processingStatus', function($self, $data)
     {
       setObjectPropertyToTermIdLookedUpFromTermNameArray(
         $self,
@@ -343,7 +375,7 @@ EOF;
       );
     });
 
-    $import->addColumnHandler('processingPriority', function(&$self, $data)
+    $import->addColumnHandler('processingPriority', function($self, $data)
     {
       setObjectPropertyToTermIdLookedUpFromTermNameArray(
         $self,
@@ -358,24 +390,6 @@ EOF;
     $import->searchIndexingDisabled = ($options['index']) ? false : true;
 
     $import->csv($fh, $skipRows);
-  }
-
-  private function parseCountryOrCountryCodeOrFail($value)
-  {
-    $countries = sfCultureInfo::getInstance()->getCountries();
-
-    if (isset($countries[strtoupper($value)]))
-    {
-      return $value; // Value was a country code
-    }
-    else if ($countryCode = array_search($value, $countries))
-    {
-      return $countryCode; // Value was a country name
-    }
-    else
-    {
-      throw new sfException(sprintf('Could not find country or country code matching "%s"', $value));
-    }
   }
 }
 

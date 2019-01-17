@@ -32,13 +32,14 @@ class QubitFlatfileImport
   public $displayProgress = true;    // display progress by default
   public $rowsUntilProgressDisplay;  // optional display progress every n rows
 
-  public $searchIndexingDisabled = true;  // disable per-object search indexing by default
-  public $matchAndUpdate         = false; // Match existing records & update them
-  public $deleteAndReplace       = false; // Delete matching records & replace them
-  public $skipMatched            = false; // Skip creating new record if matching one is found
-  public $skipUnmatched          = false; // Skip creating new record if matching one is not found
-  public $keepDigitalObjects     = false; // Skip deletion of DOs when set. Works when --update set.
-  public $limitToId              = 0;     // Id of repository or TLD to limit our update matching under
+  public $searchIndexingDisabled   = true;  // disable per-object search indexing by default
+  public $disableNestedSetUpdating = false; // update nested set on object creation
+  public $matchAndUpdate           = false; // match existing records & update them
+  public $deleteAndReplace         = false; // delete matching records & replace them
+  public $skipMatched              = false; // skip creating new record if matching one is found
+  public $skipUnmatched            = false; // skip creating new record if matching one is not found
+  public $keepDigitalObjects       = false; // skip deletion of DOs when set. Works when --update set.
+  public $limitToId                = 0;     // id of repository or TLD to limit our update matching under
   public $status          = array(); // place to store data related to overall import
   public $rowStatusVars   = array(); // place to store data related to current row
 
@@ -50,7 +51,10 @@ class QubitFlatfileImport
   public $standardColumns = array(); // columns in CSV are object properties
   public $columnMap       = array(); // columns in CSV that map to object properties
   public $propertyMap     = array(); // columns in CSV that map to Qubit properties
+  public $termRelations   = array(); // columns in CSV that map to terms in a given taxonomy
   public $noteMap         = array(); // columns in CSV that should become notes
+  public $languageMap     = array(); // columns in CSV that map to serialized language Qubit properties
+  public $scriptMap       = array(); // columns in CSV that map to serialized script Qubit properties
   public $handlers        = array(); // columns in CSV paired with custom handling logic
   public $variableColumns = array(); // columns in CSV to be later referenced by logic
   public $arrayColumns    = array(); // columns in CSV to explode and later reference
@@ -181,71 +185,6 @@ class QubitFlatfileImport
     else
     {
       return $text;
-    }
-  }
-
-  /**
-   * Attempt to parse date from non-machine-readable text,
-   * returning false upon failure and logging failures.
-   *
-   * @param string $dateText  description of date
-   *
-   * @return string  date in YYYY-MM-DD format
-   */
-  public function parseDateLoggingErrors($dateText)
-  {
-    $date = $this->parseDate($dateText);
-    if ($date)
-    {
-      return $date;
-    }
-    else
-    {
-      $this->logError('Could not parse date: '. $dateText);
-      return false;
-    }
-  }
-
-  /**
-   * Attempt to parse date from non-machine-readable text,
-   * returning false upon failure.
-   *
-   * @param string $dateText  description of date
-   *
-   * @return string  date in YYYY-MM-DD format
-   */
-  public static function parseDate($dateText)
-  {
-    $dateText = trim($dateText);
-    if (is_numeric($dateText))
-    {
-      // return year as beginning date of year
-      $dateData = array(
-        'year'  => $dateText,
-        'month' => '01',
-        'day'   => '01'
-      );
-    }
-    else
-    {
-      $dateData = date_parse($dateText);
-    }
-
-    if (!$dateData['year'] || !$dateData['month'] || !$dateData['day'])
-    {
-      return false;
-    }
-    else
-    {
-      // turn back to string
-      $dateString = $dateData['year'] .'-'
-        . $dateData['month'] .'-'
-        . $dateData['day'];
-
-      $date = new DateTime($dateString);
-
-      // format to pad with leading 0s
-      return $date->format('Y-m-d');
     }
   }
 
@@ -701,10 +640,18 @@ class QubitFlatfileImport
       return;
     }
 
+    // Event caching interferes with duplicate detection
+    QubitEvent::clearCache();
+
+    // Get related events
+    $criteria = new Criteria;
+    $criteria->add(QubitEvent::OBJECT_ID, $this->object->id);
+
+    // Compare fields of the event in question with each associated event
     $fields = array('startDate', 'startTime', 'endDate', 'endTime', 'typeId', 'objectId', 'actorId', 'name',
                     'description', 'date', 'culture');
 
-    foreach ($this->object->eventsRelatedByobjectId as $existingEvent)
+    foreach (QubitEvent::get($criteria) as $existingEvent)
     {
       $match = true;
 
@@ -803,7 +750,7 @@ class QubitFlatfileImport
 
       if (property_exists(get_class($this->object), 'disableNestedSetUpdating'))
       {
-        $this->object->disableNestedSetUpdating = $this->searchIndexingDisabled;
+        $this->object->disableNestedSetUpdating = $this->disableNestedSetUpdating;
       }
     }
     else
@@ -1233,6 +1180,16 @@ class QubitFlatfileImport
   {
     $this->forEachRowColumn($row, function(&$self, $index, $columnName, $value)
     {
+      // Create/relate terms
+      if (isset($self->termRelations) && isset($self->termRelations[$columnName]) && $value)
+      {
+        foreach (explode('|', $value) as $name)
+        {
+          $self->createOrFetchTermAndAddRelation($self->termRelations[$columnName], $name);
+        }
+      }
+
+      // Create/update notes
       if (isset($self->noteMap) && isset($self->noteMap[$columnName]) && $value)
       {
         // otherwise, if maps to a note, create it
@@ -1244,6 +1201,18 @@ class QubitFlatfileImport
           explode('|', $value),
           $transformationLogic
         );
+      }
+
+      // Add language properties
+      if (isset($self->languageMap) && isset($self->languageMap[$columnName]) && $value)
+      {
+        $self->storeLanguageSerializedProperty($self->languageMap[$columnName], explode('|', $value));
+      }
+
+      // Add script properties
+      if (isset($self->scriptMap) && isset($self->scriptMap[$columnName]) && $value)
+      {
+        $self->storeScriptSerializedProperty($self->scriptMap[$columnName], explode('|', $value));
       }
     });
   }
@@ -2076,32 +2045,22 @@ class QubitFlatfileImport
   }
 
   /**
-   * Create a term and relate it to an object
+   * Create or fetch a term and relate it to an object
    *
    * @param integer $taxonomyId  taxonomy ID
    * @param string $name  name of term
-   * @param string $culture  culture code (defaulting to English)
+   * @param string $culture  culture code (defaulting to row's current culture)
    *
    * @return void
    */
-  public function createAccessPoint($taxonomyId, $name, $culture = null)
+  public function createOrFetchTermAndAddRelation($taxonomyId, $name, $culture = null)
   {
-    if (null === $culture)
-    {
-      $culture = sfContext::getInstance()->user->getCulture();
-    }
+    $culture = ($culture !== null) ? $culture : $this->columnValue('culture');
 
-    $query = "SELECT t.id FROM term t \r
-      LEFT JOIN term_i18n ti ON t.id=ti.id \r
-      WHERE t.taxonomy_id=? AND ti.name=? AND ti.culture=?";
-    $statement = $this->sqlQuery($query, array($taxonomyId, $name, $culture));
-
-    if (!($term = $statement->fetch(PDO::FETCH_OBJ)))
-    {
-      $term = $this->createTerm($taxonomyId, $name, $culture);
-    }
-
+    $term = $this->createOrFetchTerm($taxonomyId, $name, $culture);
     self::createObjectTermRelation($this->object->id, $term->id);
+
+    return $term;
   }
 
   /**
@@ -2179,6 +2138,108 @@ class QubitFlatfileImport
   }
 
   /**
+   * Store a property of the imported object containing a serialized array of
+   * language values
+   *
+   * @param string $propertyName  Name of QubitProperty to create
+   * @param array $values  values to serialize and store
+   *
+   * @return void
+   */
+  public function storeLanguageSerializedProperty($propertyName, $values)
+  {
+    $languages = array_keys(sfCultureInfo::getInstance()->getLanguages());
+    $this->storeSerializedPropertyUsingControlledVocabulary($propertyName, $values, $languages);
+  }
+
+  /**
+   * Store a property of the imported object containing a serialized array of
+   * script values
+   *
+   * @param string $propertyName  Name of QubitProperty to create
+   * @param array $values  values to serialize and store
+   *
+   * @return void
+   */
+  public function storeScriptSerializedProperty($propertyName, $values)
+  {
+    $scripts = array_keys(sfCultureInfo::getInstance()->getScripts());
+    $this->storeSerializedPropertyUsingControlledVocabulary($propertyName, $values, $scripts);
+  }
+
+  /**
+   * Store a property of the imported object containing a serialized array of
+   * values from a controlled vocabulary
+   *
+   * @param string $propertyName  Name of QubitProperty to create
+   * @param array $values  values to serialize and store
+   * @param string $vocabulary  allowable values
+   *
+   * @return void
+   */
+  private function storeSerializedPropertyUsingControlledVocabulary($propertyName, $values, $vocabulary)
+  {
+    // Validate and normalize values
+    foreach ($values as $valueIndex => $value)
+    {
+      // Fail on invalid value (normalizing by case when checking value validity)
+      if (false === $vocabularyIndex = array_search(strtolower($value), array_map('strtolower', $vocabulary)))
+      {
+        throw new sfException(sprintf('Invalid %s: %s', $propertyName, $value));
+      }
+
+      // Normalize case of value
+      $values[$valueIndex] = $vocabulary[$vocabularyIndex];
+    }
+
+    $criteria = new Criteria;
+    $criteria->add(QubitProperty::OBJECT_ID, $this->object->id);
+    $criteria->add(QubitProperty::NAME, $propertyName);
+
+    // Get property if it exists
+    if (null === $property = QubitProperty::getOne($criteria))
+    {
+      // Create property manually rather than using addProperty model methods
+      // as they are implemented inconsistently
+      $property = new QubitProperty;
+      $property->objectId = $this->object->id;
+      $property->name = $propertyName;
+    }
+
+    $property->setValue(serialize(array_unique($values)), array('sourceCulture' => true));
+    $property->indexOnSave = !$this->searchIndexingDisabled;
+    $property->save();
+  }
+
+  /**
+   * Create keymap entry for object
+   *
+   * @param string $sourceName  Name of source data
+   * @param int $sourceId  ID from source data
+   * @param object $object  Object to create entry for
+   *
+   * @return void
+   */
+  public function createKeymapEntry($sourceName, $sourceId, $object = null)
+  {
+    // Default to imported object
+    if ($object == null)
+    {
+      $object = $this->object;
+    }
+
+    // Determine target name using object class
+    $targetName = sfInflector::underscore(str_replace('Qubit', '', get_class($object)));
+
+    $keymap = new QubitKeymap;
+    $keymap->sourceName = $sourceName;
+    $keymap->sourceId   = $sourceId;
+    $keymap->targetId   = $object->id;
+    $keymap->targetName = $targetName;
+    $keymap->save();
+  }
+
+  /**
    * Fetch keymap an entity's Qubit object ID (target ID) by looking up its
    * legacy ID (source ID), the name of the import where it was mapped (source
    * name), and the type of entity (target name)
@@ -2251,6 +2312,27 @@ class QubitFlatfileImport
     else
     {
       throw new sfException('Could not find object matching slug "'. $slug .'"');
+    }
+  }
+
+  /**
+   * Get country code using input that's either a country code or country name
+   *
+   * @param string $value  country code or country name
+   *
+   * @return string  country code
+   */
+  public static function normalizeCountryAsCountryCode($value)
+  {
+    $countries = sfCultureInfo::getInstance()->getCountries();
+
+    if (isset($countries[strtoupper($value)]))
+    {
+      return $value; // Value was a country code
+    }
+    else if ($countryCode = array_search($value, $countries))
+    {
+      return $countryCode; // Value was a country name
     }
   }
 }

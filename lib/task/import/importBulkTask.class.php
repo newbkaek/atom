@@ -116,13 +116,14 @@ EOF;
       if ('csv' == pathinfo($file, PATHINFO_EXTENSION))
       {
         $importer = new QubitCsvImport;
+        $importer->indexDuringImport = $options['index'];
         $importer->import($file, $options);
       }
       elseif ('xml' == pathinfo($file, PATHINFO_EXTENSION))
       {
         $importer = new QubitXmlImport;
+        $importer->includeClassesAndHelpers();
         $options['strictXmlParsing'] = false;
-
         $importer->import($file, $options);
       }
       else

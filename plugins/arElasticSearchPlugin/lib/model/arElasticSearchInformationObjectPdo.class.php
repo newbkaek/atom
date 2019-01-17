@@ -30,7 +30,9 @@ class arElasticSearchInformationObjectPdo
     $ancestors,
     $doc,
     $repository,
-    $sourceCulture;
+    $sourceCulture,
+    $creators = array(),
+    $inheritedCreators = array();
 
   protected
     $data = array(),
@@ -67,6 +69,31 @@ class arElasticSearchInformationObjectPdo
     if (isset($options['repository']) && !$this->__isset('repository_id'))
     {
       $this->repository = $options['repository'];
+    }
+
+    // Get inherited creators
+    if (isset($options['inheritedCreators']))
+    {
+      $this->inheritedCreators = $options['inheritedCreators'];
+    }
+
+    // Get creators
+    $this->creators = $this->getActors(array('typeId' => QubitTerm::CREATION_ID));
+
+    // Ignore inherited creators if there are directly related creators
+    if (count($this->creators) > 0)
+    {
+      $this->inheritedCreators = array();
+    }
+    // Otherwise, get them from the options
+    elseif (isset($options['inheritedCreators']))
+    {
+      $this->inheritedCreators = $options['inheritedCreators'];
+    }
+    // Or from the closest ancestor
+    else
+    {
+      $this->inheritedCreators = $this->getClosestCreators();
     }
   }
 
@@ -239,6 +266,45 @@ class arElasticSearchInformationObjectPdo
     }
 
     return $this->repository;
+  }
+
+  public function getClosestCreators()
+  {
+    $inheritedCreators = array();
+
+    if (!is_array($this->getAncestors()) || count($this->getAncestors()) == 0)
+    {
+      return $inheritedCreators;
+    }
+
+    if (!isset(self::$statements['inheritedCreators']))
+    {
+      $sql  = 'SELECT
+                  event.actor_id as id';
+      $sql .= ' FROM '.QubitEvent::TABLE_NAME.' event';
+      $sql .= ' WHERE event.actor_id IS NOT NULL';
+      $sql .= ' AND event.object_id = ?';
+      $sql .= ' AND event.type_id = ?';
+
+      self::$statements['inheritedCreators'] = self::$conn->prepare($sql);
+    }
+
+    foreach (array_reverse($this->getAncestors()) as $ancestor)
+    {
+      self::$statements['inheritedCreators']->execute(array($ancestor->id, QubitTerm::CREATION_ID));
+
+      foreach (self::$statements['inheritedCreators']->fetchAll(PDO::FETCH_OBJ) as $creator)
+      {
+        $inheritedCreators[] = $creator;
+      }
+
+      if (count($inheritedCreators) > 0)
+      {
+        break;
+      }
+    }
+
+    return $inheritedCreators;
   }
 
   /**
@@ -538,12 +604,6 @@ class arElasticSearchInformationObjectPdo
       ':typeId' => QubitTerm::NAME_ACCESS_POINT_ID));
 
     foreach (self::$statements['actorRelation']->fetchAll(PDO::FETCH_OBJ) as $item)
-    {
-      $names[$item->id] = $item;
-    }
-
-    // Get actors linked via the "event" table (e.g. creators)
-    foreach ($this->getActors() as $item)
     {
       $names[$item->id] = $item;
     }
@@ -1215,10 +1275,17 @@ class arElasticSearchInformationObjectPdo
     }
 
     // Creators
-    foreach ($this->getActors(array('typeId' => QubitTerm::CREATION_ID)) as $item)
+    foreach ($this->creators as $item)
     {
       $node = new arElasticSearchActorPdo($item->id);
       $serialized['creators'][] = $node->serialize();
+    }
+
+    // Inherited creators
+    foreach ($this->inheritedCreators as $item)
+    {
+      $node = new arElasticSearchActorPdo($item->id);
+      $serialized['inheritedCreators'][] = $node->serialize();
     }
 
     // Physical objects
@@ -1268,6 +1335,14 @@ class arElasticSearchInformationObjectPdo
       foreach ($this->getNotesByType($termId) as $item)
       {
         $serialized['continuationOfTitleNotes'][] = arElasticSearchNote::serialize($item);
+      }
+    }
+
+    if (null !== $termId = $this->getTermIdByNameAndTaxonomy("Archivist's note", QubitTaxonomy::NOTE_TYPE_ID))
+    {
+      foreach ($this->getNotesByType($termId) as $item)
+      {
+        $serialized['archivistsNotes'][] = arElasticSearchNote::serialize($item);
       }
     }
 

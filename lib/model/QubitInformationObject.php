@@ -351,6 +351,12 @@ class QubitInformationObject extends BaseInformationObject
     // Delete any keymap entries
     $this->removeKeymapEntries();
 
+    // Delete finding aid
+    if (null !== $path = arFindingAidJob::getFindingAidPathForDownload($this->id))
+    {
+      unlink($path);
+    }
+
     QubitSearch::getInstance()->delete($this);
 
     parent::delete($connection);
@@ -626,7 +632,7 @@ class QubitInformationObject extends BaseInformationObject
   {
     if ($this->getPublicationStatus()->statusId == QubitTerm::PUBLICATION_STATUS_PUBLISHED_ID && file_exists($this->pathToEadExport()))
     {
-      return sfConfig::get('siteBaseUrl') .'/'. $this->pathToEadExport();
+      return sfConfig::get('app_siteBaseUrl') .'/'. $this->pathToEadExport();
     }
     else
     {
@@ -655,7 +661,7 @@ class QubitInformationObject extends BaseInformationObject
   {
     if ($this->getPublicationStatus()->statusId == QubitTerm::PUBLICATION_STATUS_PUBLISHED_ID && file_exists($this->pathToDcExport()))
     {
-      return sfConfig::get('siteBaseUrl') .'/'. $this->pathToDcExport();
+      return sfConfig::get('app_siteBaseUrl') .'/'. $this->pathToDcExport();
     }
     else
     {
@@ -1416,31 +1422,31 @@ class QubitInformationObject extends BaseInformationObject
   {
     // Set digital object URL
     $do = $this->digitalObjects[0];
-
-    if (isset($do))
+    if (!isset($do))
     {
-      $path = $do->getFullPath();
-
-      // if path is external, it's absolute so return it
-      if (QubitTerm::EXTERNAL_URI_ID == $do->usageId)
-      {
-        return $path;
-      }
-      else if (QubitTerm::OFFLINE_ID === $do->usageId)
-      {
-        throw new sfException('getDigitalObjectPublicUrl() is not available for offline digital objects');
-      }
-      else
-      {
-        if (!QubitAcl::check($this, 'readMaster') && null !== $do->reference &&
-            QubitAcl::check($this, 'readReference'))
-        {
-          $path = $do->reference->getFullPath();
-        }
-
-        return rtrim(QubitSetting::getByName('siteBaseUrl'), '/').'/'.ltrim($path, '/');
-      }
+      return;
     }
+
+    if (QubitTerm::OFFLINE_ID == $do->usageId)
+    {
+      return;
+    }
+    
+    $path = $do->getFullPath();
+
+    // If path is external, it's absolute so return it
+    if (QubitTerm::EXTERNAL_URI_ID == $do->usageId)
+    {
+      return $path;
+    }
+
+    if (!QubitAcl::check($this, 'readMaster') && null !== $do->reference &&
+        QubitAcl::check($this, 'readReference'))
+    {
+      $path = $do->reference->getFullPath();
+    }
+
+    return rtrim(QubitSetting::getByName('siteBaseUrl'), '/').'/'.ltrim($path, '/');
   }
 
   /****************
@@ -3158,9 +3164,9 @@ class QubitInformationObject extends BaseInformationObject
     }
 
     $digitalObject = $this->digitalObjects[0];
-    if (QubitTerm::OFFLINE_ID === $digitalObject->usageId)
+    if (QubitTerm::OFFLINE_ID == $digitalObject->usageId)
     {
-      throw new sfException('getDigitalObjectLink() is not available for offline digital objects');
+      return;
     }
 
     $isText = in_array($digitalObject->mediaTypeId, array(QubitTerm::TEXT_ID));
@@ -3189,14 +3195,8 @@ class QubitInformationObject extends BaseInformationObject
    */
   private function generateSlug()
   {
-    if (null === $slugBasis = QubitSetting::getByName('slug_basis_informationobject'))
-    {
-      $slugBasis = QubitSlug::SLUG_BASIS_TITLE; // Fall back to title as slug basis
-    }
-    else
-    {
-      $slugBasis = $slugBasis->getValue();
-    }
+    // Fall back to title as slug basis
+    $slugBasis = sfConfig::get('app_slug_basis_informationobject', QubitSlug::SLUG_BASIS_TITLE);
 
     $stringToSlugify = null;
 
@@ -3333,22 +3333,7 @@ class QubitInformationObject extends BaseInformationObject
   public static function generateIdentiferFromMask()
   {
     $counter = self::getIdentifierCounter();
-
-    return preg_replace_callback('/([#%])([A-z]+)/', function($match) use ($counter)
-    {
-      if ('%' == $match[1])
-      {
-        return strftime('%'.$match[2]);
-      }
-      else if ('#' == $match[1])
-      {
-        if (0 < preg_match('/^i+$/', $match[2], $matches))
-        {
-          return str_pad($counter->value, strlen($matches[0]), 0, STR_PAD_LEFT);
-        }
-
-        return $match[2];
-      }
-    }, sfConfig::get('app_identifier_mask', ''));
+    $counterValue = $counter->getValue(array('sourceCulture' => true));
+    return Qubit::generateIdentifierFromCounterAndMask($counterValue, sfConfig::get('app_identifier_mask', ''));
   }
 }

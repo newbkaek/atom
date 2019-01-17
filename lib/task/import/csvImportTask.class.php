@@ -398,6 +398,18 @@ EOF;
         )
       ),
 
+      // Import columns with values that should be serialized/added as a language property
+      'languageMap' => array(
+        'language'              => 'language',
+        'languageOfDescription' => 'languageOfDescription'
+      ),
+
+      // Import columns with values that should be serialized/added as a script property
+      'scriptMap' => array(
+        'script'              => 'script',
+        'scriptOfDescription' => 'scriptOfDescription'
+      ),
+
       // These values get stored to the rowStatusVars array
       'variableColumns' => array(
         'legacyId',
@@ -529,60 +541,6 @@ EOF;
           }
 
           $self->object->descriptionDetailId = $levelOfDetailTermId;
-        }
-
-        // Store language-related properties as serialized data and check for incorrect values
-        $languageProperties = array(
-          'language',
-          'script',
-          'languageOfDescription',
-          'scriptOfDescription'
-        );
-
-        foreach ($languageProperties as $serializeProperty)
-        {
-          if (isset($self->rowStatusVars[$serializeProperty]) && 0 < strlen($self->rowStatusVars[$serializeProperty]))
-          {
-            $data = explode('|', $self->rowStatusVars[$serializeProperty]);
-
-            // Normalize and validate language values
-            if (0 === strpos('language', $serializeProperty))
-            {
-              $languages = array_keys(sfCultureInfo::getInstance()->getLanguages());
-
-              foreach ($data as $index => $value)
-              {
-                // Fail on invalid language value
-                if (false === $languageIndex = array_search(strtolower($data[$index]), array_map('strtolower', $languages)))
-                {
-                  throw new sfException(sprintf('Invalid language: %s', $data[$index]));
-                }
-
-                // Normalize case of language
-                $data[$index] = $languages[$languageIndex];
-              }
-            }
-
-            // Normalize and validate script values
-            if (0 === strpos('script', $serializeProperty))
-            {
-              foreach ($data as $index => $value)
-              {
-                $originalValue = $data[$index];
-
-                // Normalize case of script
-                $data[$index] = ucwords(strtolower($data[$index]));
-
-                // Fail on invalid script value
-                if (false === array_search($data[$index], array_keys(sfCultureInfo::getInstance()->getScripts())))
-                {
-                  throw new sfException(sprintf('Invalid script: %s', $originalValue));
-                }
-              }
-            }
-
-            $self->object->addProperty($serializeProperty, serialize($data));
-          }
         }
 
         // Add alternative identifiers
@@ -798,7 +756,7 @@ EOF;
                   $scope = $self->rowStatusVars['subjectAccessPointScopes'][$index];
                 }
 
-                $self->createAccessPoint($taxonomyId, $subject);
+                $self->createOrFetchTermAndAddRelation($taxonomyId, $subject);
 
                 if ($scope)
                 {
@@ -1143,6 +1101,7 @@ EOF;
 
     // Allow search indexing to be enabled via a CLI option
     $import->searchIndexingDisabled = ($options['index']) ? false : true;
+    $import->disableNestedSetUpdating = ($options['skip-nested-set-build']) ? true : false;
 
     // Set update, limit and skip options
     $import->setUpdateOptions($options);
@@ -1188,15 +1147,6 @@ EOF;
     });
 
     $import->csv($fh, $skipRows);
-
-    // Build nested set if desired
-    if (!$options['skip-nested-set-build'])
-    {
-      $buildNestedSet = new propelBuildNestedSetTask($this->dispatcher, $this->formatter);
-      $buildNestedSet->setCommandApplication($this->commandApplication);
-      $buildNestedSet->setConfiguration($this->configuration);
-      $ret = $buildNestedSet->run();
-    }
   }
 }
 

@@ -1,4 +1,4 @@
-FROM php:7-fpm-alpine
+FROM php:7.0-fpm-alpine
 
 ARG GIT_BRANCH=stable/2.4.x
 
@@ -14,6 +14,7 @@ RUN set -xe \
 			autoconf \
 			build-base \
 		&& docker-php-ext-install \
+			calendar \
 			gettext \
 			mbstring \
 			mcrypt \

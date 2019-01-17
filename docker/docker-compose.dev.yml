@@ -9,12 +9,6 @@ volumes:
   percona_data:
     driver: "local"
 
-  atom_uploads:
-    driver: "local"
-
-  atom_downloads:
-    driver: "local"
-
 networks:
 
   net_cache:
@@ -31,8 +25,9 @@ services:
     command: "bash -c 'chown -R elasticsearch:elasticsearch /elasticsearch-data && elasticsearch -Des.network.host=0.0.0.0 -Des.path.data=/elasticsearch-data'"
     volumes:
       - "elasticsearch_data:/elasticsearch-data:rw"
+    ports:
+      - "63002:9200"
     expose:
-      - "9200"
       - "9300"
     networks:
       - "net_search"
@@ -76,8 +71,6 @@ services:
     command: "fpm"
     volumes:
       - "../:/atom/src:rw"
-      - "atom_uploads:/atom/src/uploads:rw"
-      - "atom_downloads:/atom/src/downloads:rw"
     networks:
       - "net_cache"
       - "net_db"
@@ -92,6 +85,7 @@ services:
       - "ATOM_MYSQL_DSN=mysql:host=percona;port=3306;dbname=atom;charset=utf8"
       - "ATOM_MYSQL_USERNAME=atom"
       - "ATOM_MYSQL_PASSWORD=atom_12345"
+      - "ATOM_DEBUG_IP=172.22.0.1"
 
   atom_worker:
     build:
@@ -100,8 +94,6 @@ services:
     command: "worker"
     volumes:
       - "../:/atom/src:rw"
-      - "atom_uploads:/atom/src/uploads:rw"
-      - "atom_downloads:/atom/src/downloads:rw"
     networks:
       - "net_cache"
       - "net_db"
@@ -119,12 +111,10 @@ services:
   nginx:
     image: "nginx:latest"
     ports:
-      - "80"
+      - "63001:80"
     volumes:
       - "../:/atom/src:ro"
       - "./etc/nginx/prod.conf:/etc/nginx/nginx.conf:ro"
-      - "atom_uploads:/atom/src/uploads:ro"
-      - "atom_downloads:/atom/src/downloads:ro"
     networks:
       - "net_http"
     depends_on:

@@ -408,12 +408,20 @@ mapping:
         - names.parallelNames.name
         - names.standardizedNames.name
         - creators.authorizedFormOfName
+        - creators.history
         - creators.otherNames.name
         - creators.parallelNames.name
         - creators.standardizedNames.name
+        - inheritedCreators.authorizedFormOfName
         - subjects.name
         - places.name
         - genres.name
+        - generalNotes.content
+        - alphaNumericNotes.content
+        - conservationNotes.content
+        - physicalDescriptionNotes.content
+        - continuationOfTitleNotes.content
+        - archivistsNotes.content
     _partial_foreign_types:
       part_of:
         _i18nFields: [title]
@@ -425,6 +433,7 @@ mapping:
       repository: repository
       names: actor
       creators: actor
+      inherited_creators: actor
       subjects: term
       places: term
       genres: term
@@ -440,6 +449,7 @@ mapping:
       conservation_notes: note
       physical_description_notes: note
       continuation_of_title_notes: note
+      archivists_notes: note
     dynamic: strict
     properties:
       slug: { type: string, index: not_analyzed }
