@@ -288,6 +288,9 @@
         <?php echo get_partial('informationobject/notes', $sf_data->getRaw('notesComponent')->getVarHolder()->getAll()) ?>
 
         <?php echo get_partial('informationobject/notes', $sf_data->getRaw('otherNotesComponent')->getVarHolder()->getAll()) ?>
+        
+        <?php /* Hackyhacky hack to hack archivist notes field from ISAD(G) template into RAD template :) */ ?>
+        <?php echo get_partial('informationobject/notes', $sf_data->getRaw('archivistsNotesComponent')->getVarHolder()->getAll()) ?>
 
       </fieldset> <!-- #notesArea -->
 
