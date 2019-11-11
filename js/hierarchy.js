@@ -24,7 +24,7 @@
     var $moreButton = $('#fullwidth-treeview-more-button');
     var $resetButton = $('#fullwidth-treeview-reset-button');
 
-    var pager = new Qubit.TreeviewPager(50, $fwTreeView, window.location.pathname + url);
+    var pager = new Qubit.TreeviewPager(200, $fwTreeView, window.location.pathname + url);
 
     // True until a node is selected manually (not by state restoration)
     var refresh = true;

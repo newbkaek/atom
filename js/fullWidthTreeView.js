@@ -13,7 +13,7 @@
     var $mainHeader = $('#main-column h1').first();
     var $moreButton = $('#fullwidth-treeview-more-button');
     var $resetButton = $('#fullwidth-treeview-reset-button');
-    var pager = new Qubit.TreeviewPager(50, $fwTreeView, collectionUrl + pathToApi);
+    var pager = new Qubit.TreeviewPager(200, $fwTreeView, collectionUrl + pathToApi);
 
     // Add tree-view divs after main header, animate and allow resize
     $mainHeader.after(
