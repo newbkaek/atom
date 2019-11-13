@@ -81,7 +81,7 @@
        scrollOffset = jQuery('li.jstree-node:last')[0].offsetTop;
     }
 
-    $('.jstree-container-ul').parent().scrollTop(scrollOffset);
+    // $('.jstree-container-ul').parent().scrollTop(scrollOffset);
   }
 
   Qubit.TreeviewPager.prototype.reset = function($moreButton, $resetButton)
