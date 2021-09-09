@@ -88,6 +88,7 @@
       </li>
     <?php endif; ?>
 
+    <?php if ($sf_user->isAuthenticated()): ?>
     <?php if ($sf_context->getConfiguration()->isPluginEnabled('sfEadPlugin')): ?>
       <li>
         <a href="<?php echo $resource->urlForEadExport() ?>">
@@ -95,6 +96,7 @@
           <?php echo __('EAD 2002 XML') ?>
         </a>
       </li>
+    <?php endif; ?>
     <?php endif; ?>
 
     <?php if ('sfModsPlugin' == $sf_context->getModuleName() && $sf_context->getConfiguration()->isPluginEnabled('sfModsPlugin')): ?>
